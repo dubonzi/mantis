@@ -1,3 +1,6 @@
 ignite:
   fiber:
     port: 8080
+
+loader:
+  mode: file

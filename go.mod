@@ -3,12 +3,13 @@ module github.com/dubonzi/wirego
 go 1.17
 
 require (
+	github.com/americanas-go/config v1.4.0
 	github.com/americanas-go/ignite v1.0.0-beta.23
+	github.com/gofiber/fiber/v2 v2.18.0
 	go.uber.org/fx v1.14.2
 )
 
 require (
-	github.com/americanas-go/config v1.4.0 // indirect
 	github.com/americanas-go/health v1.0.0 // indirect
 	github.com/americanas-go/log v1.6.0 // indirect
 	github.com/americanas-go/rest-response v1.0.2 // indirect
@@ -18,7 +19,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
 	github.com/gobeam/stringy v0.0.0-20210316044400-299c6e83c4a5 // indirect
-	github.com/gofiber/fiber/v2 v2.18.0 // indirect
 	github.com/klauspost/compress v1.13.5 // indirect
 	github.com/knadh/koanf v1.0.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect

@@ -7,6 +7,9 @@ import (
 
 func main() {
 
-	app := fx.New(modules.Main())
+	app := fx.New(
+		modules.Main(),
+	)
+
 	app.Run()
 }

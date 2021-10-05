@@ -1,0 +1,15 @@
+{
+  "request": {
+    "url": "/product/12345",
+    "headers": {
+      "accept": "application/json"
+    }
+  },
+  "response": {
+    "statusCode": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "bodyFile": "get_product_12345_response.json"
+  }
+}

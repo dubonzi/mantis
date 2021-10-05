@@ -7,5 +7,6 @@ type Matcher struct {
 }
 
 func NewMatcher(loader Loader) *Matcher {
+	loader.GetMappings()
 	return &Matcher{loader: loader}
 }

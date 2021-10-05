@@ -1,2 +1,2 @@
 dev:
-	go run cmd/main.go --conf=configs/base.yaml
+	go run cmd/*.go --conf=configs/base.yaml

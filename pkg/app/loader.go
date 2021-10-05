@@ -1,5 +1,10 @@
 package app
 
+import (
+	"log"
+	"os"
+)
+
 type Loader interface {
 	GetMappings() Mappings
 }
@@ -11,5 +16,15 @@ func NewFileLoader() Loader {
 }
 
 func (f *FileLoader) GetMappings() Mappings {
-	return make(Mappings)
+
+	dirs, err := os.ReadDir("files/mapping")
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	for _, entry := range dirs {
+		log.Println(entry.Name())
+	}
+	return nil
 }

@@ -1,3 +1,4 @@
 Logging
 Partial Body Matching
 Regex Matching
+Possibly remove ignite dependency or at least abstract ignite configurations

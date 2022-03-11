@@ -26,5 +26,9 @@ func main() {
 	}
 
 	<-stop
-	app.Stop(ctx)
+	err = app.Stop(ctx)
+	if err != nil {
+		log.Errorf("error stopping app: ", err)
+		os.Exit(1)
+	}
 }

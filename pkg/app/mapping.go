@@ -1,6 +1,6 @@
 package app
 
-type Mappings map[string][]Mapping // [httpMethod][]Mapping
+type Mappings map[string][]Mapping
 
 type Mapping struct {
 	Request struct {

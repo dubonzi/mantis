@@ -1,6 +1,14 @@
 ignite:
   fiber:
     port: 8080
+    config:
+      disableStartupMessage: true
+  zerolog:
+    level: DEBUG
+    formatter: TEXT
+
+fx:
+  disableLogging: true
 
 loader:
   mode: file

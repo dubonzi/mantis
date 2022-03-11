@@ -95,8 +95,8 @@ func TestLoadMappings(t *testing.T) {
 						t.FailNow()
 					}
 					assert.Equal(t, err.Error(), tt.wantErr.Error())
-					return
 				}
+				return
 			}
 
 			assert.Equal(t, mappings, tt.wantMappings)

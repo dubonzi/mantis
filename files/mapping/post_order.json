@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/order",
+    "body": {
+      "orderId": "999"
+    },
+    "headers": {
+      "content-type": "application/json"
+    }
+  },
+  "response": {
+    "statusCode": 200
+  }
+}

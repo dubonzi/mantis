@@ -12,8 +12,9 @@ type Mapping struct {
 
 type MappingRequest struct {
 	Method  string            `json:"method"`
-	URL     string            `json:"url"`
+	Path    string            `json:"path"`
 	Headers map[string]string `json:"headers"`
+	Body    string            `json:"body"`
 }
 
 type MappingResponse struct {
@@ -39,7 +40,7 @@ func (m Mapping) Validate() error {
 	if m.Request.Method == "" {
 		errs = append(errs, ValidationError{"Request.Method", "Method is required"})
 	}
-	if m.Request.URL == "" {
+	if m.Request.Path == "" {
 		errs = append(errs, ValidationError{"Request.URL", "URL is required"})
 	}
 

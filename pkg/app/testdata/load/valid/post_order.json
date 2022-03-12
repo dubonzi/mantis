@@ -1,10 +1,8 @@
 {
   "request": {
     "method": "POST",
-    "url": "/order",
-    "body": {
-      "orderId": "999"
-    },
+    "path": "/order",
+    "body": "{\"orderId\": \"999\"}",
     "headers": {
       "content-type": "application/json"
     }

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "/product/12345",
+    "path": "/product/12345",
     "headers": {
       "accept": "application/json"
     }

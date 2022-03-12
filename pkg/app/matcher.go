@@ -1,17 +1,17 @@
 package app
 
-import "github.com/americanas-go/log"
+type Matcher interface {
+	Match(Request) MappingResponse
+}
 
-type Matcher struct {
-	loader Loader
-
+type BasicMatcher struct {
 	mappings Mappings
 }
 
-func NewMatcher(loader Loader) *Matcher {
-	m, err := loader.GetMappings()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return &Matcher{loader: loader, mappings: m}
+func NewMatcher(m Mappings) *BasicMatcher {
+	return &BasicMatcher{mappings: m}
+}
+
+func (m *BasicMatcher) Match(r Request) MappingResponse {
+	return MappingResponse{}
 }

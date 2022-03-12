@@ -27,10 +27,10 @@ func RequestFromFiber(r *fiber.Request) Request {
 }
 
 type Handler struct {
-	matcher *Matcher
+	matcher Matcher
 }
 
-func NewHandler(matcher *Matcher) *Handler {
+func NewHandler(matcher Matcher) *Handler {
 	return &Handler{matcher}
 }
 

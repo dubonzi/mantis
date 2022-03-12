@@ -20,7 +20,8 @@ func mainModule() fx.Option {
 		fx.Provide(
 			context.Background,
 			app.NewHandler,
-			app.NewMatcher,
+			fx.Annotate(app.NewMatcher, fx.As(new(app.Matcher))),
+			func(loader app.Loader) (app.Mappings, error) { return loader.GetMappings() },
 		),
 		serverModule(),
 		loaderModule(),
@@ -36,7 +37,7 @@ func loaderModule() fx.Option {
 		return fx.Provide()
 	default:
 		return fx.Provide(
-			func() app.Loader { return app.NewFileLoader() },
+			fx.Annotate(app.NewFileLoader, fx.As(new(app.Loader))),
 		)
 	}
 

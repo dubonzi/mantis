@@ -19,7 +19,7 @@ func TestDecodeFile(t *testing.T) {
 			name: "Should decode file successfuly",
 			path: "testdata/decode/get_product_12345.json",
 			wantMapping: Mapping{
-				Request:  MappingRequest{Method: "GET", URL: "/product/12345", Headers: map[string]string{"accept": "application/json"}},
+				Request:  MappingRequest{Method: "GET", Path: "/product/12345", Headers: map[string]string{"accept": "application/json"}},
 				Response: MappingResponse{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, BodyFile: "get_product_12345_response.json"},
 			},
 		},
@@ -65,11 +65,11 @@ func TestLoadMappings(t *testing.T) {
 			rootPath: "testdata/load/valid",
 			wantMappings: Mappings{
 				"GET": []Mapping{{
-					Request:  MappingRequest{Method: "GET", URL: "/product/12345", Headers: map[string]string{"accept": "application/json"}},
+					Request:  MappingRequest{Method: "GET", Path: "/product/12345", Headers: map[string]string{"accept": "application/json"}},
 					Response: MappingResponse{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, BodyFile: "get_product_12345_response.json"},
 				}},
 				"POST": []Mapping{{
-					Request:  MappingRequest{Method: "POST", URL: "/order", Headers: map[string]string{"content-type": "application/json"}},
+					Request:  MappingRequest{Method: "POST", Path: "/order", Headers: map[string]string{"content-type": "application/json"}, Body: "{\"orderId\": \"999\"}"},
 					Response: MappingResponse{StatusCode: 200},
 				}},
 			},
@@ -92,6 +92,7 @@ func TestLoadMappings(t *testing.T) {
 			if err != nil {
 				if !tt.anyErr {
 					if tt.wantErr == nil {
+						t.Log("did not expect an error, but got: ", err)
 						t.FailNow()
 					}
 					assert.Equal(t, err.Error(), tt.wantErr.Error())

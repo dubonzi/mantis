@@ -35,5 +35,11 @@ func NewHandler(matcher Matcher) *Handler {
 }
 
 func (h Handler) All(c *fiber.Ctx) error {
-	return c.JSON(RequestFromFiber(c.Request()))
+	res := h.matcher.Match(RequestFromFiber(c.Request()))
+
+	for k, v := range res.Headers {
+		c.Response().Header.Add(k, v)
+	}
+
+	return c.Status(res.StatusCode).SendString(res.Body)
 }

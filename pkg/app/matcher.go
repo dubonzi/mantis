@@ -1,9 +1,9 @@
 package app
 
-// TODO: Cache compiled regex's
+var _ Matcher = new(BasicMatcher)
 
 type Matcher interface {
-	Match(Request) (response MappingResponse, matched bool)
+	Match(Request) (response *MappingResponse)
 }
 
 type BasicMatcher struct {
@@ -14,7 +14,14 @@ func NewMatcher(m Mappings) *BasicMatcher {
 	return &BasicMatcher{mappings: m}
 }
 
-func (b *BasicMatcher) Match(r Request) (*MappingResponse, bool) {
+func (b *BasicMatcher) Match(r Request) *MappingResponse {
+	res, _ := b.match(r)
+	return res
+}
+
+// TODO: Implement the not found response
+
+func (b *BasicMatcher) match(r Request) (*MappingResponse, bool) {
 	methodMappings, ok := b.mappings[r.Method]
 	if !ok {
 		return &MappingResponse{}, false

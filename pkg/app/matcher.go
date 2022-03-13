@@ -12,6 +12,10 @@ func NewMatcher(m Mappings) *BasicMatcher {
 	return &BasicMatcher{mappings: m}
 }
 
-func (m *BasicMatcher) Match(r Request) MappingResponse {
+func (b *BasicMatcher) Match(r Request) MappingResponse {
 	return MappingResponse{}
+}
+
+func (b *BasicMatcher) matchPath(r Request, m Mapping) bool {
+	return false
 }

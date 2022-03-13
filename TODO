@@ -1,4 +1,8 @@
-Logging
-Partial Body Matching
+Improve logging
+Partial Body Matching (contains, jsonpath (https://github.com/ohler55/ojg))
 Regex Matching
 Possibly remove ignite dependency or at least abstract ignite configurations
+Improve configuration
+Improve/refactor validation
+Dockerfile
+Performance tests

@@ -1,9 +1,13 @@
 {
   "request": {
     "method": "GET",
-    "path": "/product/12345",
+    "path": {
+      "exact": "/product/12345"
+    },
     "headers": {
-      "accept": "application/json"
+      "accept": {
+        "exact": "application/json"
+      }
     }
   },
   "response": {

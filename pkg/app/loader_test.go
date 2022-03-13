@@ -19,7 +19,11 @@ func TestDecodeFile(t *testing.T) {
 			name: "Should decode file successfuly",
 			path: "testdata/decode/get_product_12345.json",
 			wantMapping: Mapping{
-				Request:  MappingRequest{Method: "GET", Path: "/product/12345", Headers: map[string]string{"accept": "application/json"}},
+				Request: MappingRequest{
+					Method:  "GET",
+					Path:    PathMapping{Exact: "/product/12345"},
+					Headers: map[string]HeaderMapping{"accept": {Exact: "application/json"}},
+				},
 				Response: MappingResponse{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, BodyFile: "get_product_12345_response.json"},
 			},
 		},
@@ -40,6 +44,7 @@ func TestDecodeFile(t *testing.T) {
 			if err != nil {
 				if !tt.anyErr {
 					if tt.wantErr == nil {
+						t.Log("did not expect an error, but got: ", err)
 						t.FailNow()
 					}
 					assert.Equal(t, err.Error(), tt.wantErr.Error())
@@ -65,11 +70,20 @@ func TestLoadMappings(t *testing.T) {
 			rootPath: "testdata/load/valid",
 			wantMappings: Mappings{
 				"GET": []Mapping{{
-					Request:  MappingRequest{Method: "GET", Path: "/product/12345", Headers: map[string]string{"accept": "application/json"}},
+					Request: MappingRequest{
+						Method:  "GET",
+						Path:    PathMapping{Exact: "/product/12345"},
+						Headers: map[string]HeaderMapping{"accept": {Exact: "application/json"}},
+					},
 					Response: MappingResponse{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, BodyFile: "get_product_12345_response.json"},
 				}},
 				"POST": []Mapping{{
-					Request:  MappingRequest{Method: "POST", Path: "/order", Headers: map[string]string{"content-type": "application/json"}, Body: "{\"orderId\": \"999\"}"},
+					Request: MappingRequest{
+						Method:  "POST",
+						Path:    PathMapping{Exact: "/order"},
+						Headers: map[string]HeaderMapping{"content-type": {Exact: "application/json"}},
+						Body:    BodyMapping{Exact: `{"orderId": "999"}`},
+					},
 					Response: MappingResponse{StatusCode: 200},
 				}},
 			},
@@ -77,7 +91,7 @@ func TestLoadMappings(t *testing.T) {
 		{
 			name:     "Should throw error if mapping is invalid",
 			rootPath: "testdata/load/invalid",
-			wantErr:  ValidationErrors{ValidationError{"Request.Method", "Method is required"}, ValidationError{"Request.URL", "URL is required"}},
+			wantErr:  ValidationErrors{ValidationError{"Request.Method", "Method is required"}, ValidationError{"Request.Path", "Path mapping is required"}},
 		},
 	}
 

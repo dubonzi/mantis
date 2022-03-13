@@ -10,11 +10,35 @@ type Mapping struct {
 	Response MappingResponse `json:"response"`
 }
 
+type PathMapping struct {
+	Exact    string `json:"exact"`
+	Contains string `json:"contains"`
+	Pattern  string `json:"pattern"`
+	JsonPath string `json:"jsonPath"`
+}
+
+func (p PathMapping) IsEmpty() bool {
+	return p.Exact == "" && p.Contains == "" && p.Pattern == "" && p.JsonPath == ""
+}
+
+type BodyMapping struct {
+	Exact    string `json:"exact"`
+	Contains string `json:"contains"`
+	Pattern  string `json:"pattern"`
+	JsonPath string `json:"jsonPath"`
+}
+
+type HeaderMapping struct {
+	Exact    string `json:"exact"`
+	Contains string `json:"contains"`
+	Pattern  string `json:"pattern"`
+}
+
 type MappingRequest struct {
-	Method  string            `json:"method"`
-	Path    string            `json:"path"`
-	Headers map[string]string `json:"headers"`
-	Body    string            `json:"body"`
+	Method  string                   `json:"method"`
+	Path    PathMapping              `json:"path"`
+	Headers map[string]HeaderMapping `json:"headers"`
+	Body    BodyMapping              `json:"body"`
 }
 
 type MappingResponse struct {
@@ -40,8 +64,8 @@ func (m Mapping) Validate() error {
 	if m.Request.Method == "" {
 		errs = append(errs, ValidationError{"Request.Method", "Method is required"})
 	}
-	if m.Request.Path == "" {
-		errs = append(errs, ValidationError{"Request.URL", "URL is required"})
+	if m.Request.Path.IsEmpty() {
+		errs = append(errs, ValidationError{"Request.Path", "Path mapping is required"})
 	}
 
 	if len(errs) > 0 {

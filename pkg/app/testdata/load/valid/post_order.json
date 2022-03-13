@@ -1,10 +1,16 @@
 {
   "request": {
     "method": "POST",
-    "path": "/order",
-    "body": "{\"orderId\": \"999\"}",
+    "path": {
+      "exact": "/order"
+    },
+    "body": {
+      "exact": "{\"orderId\": \"999\"}"
+    },
     "headers": {
-      "content-type": "application/json"
+      "content-type": {
+        "exact": "application/json"
+      }
     }
   },
   "response": {

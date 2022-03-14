@@ -19,12 +19,12 @@ func TestDecodeFile(t *testing.T) {
 			name: "Should decode file successfuly",
 			path: "testdata/decode/get_product_12345.json",
 			wantMapping: Mapping{
-				Request: MappingRequest{
+				Request: RequestMapping{
 					Method:  "GET",
 					Path:    PathMapping{Exact: "/product/12345"},
 					Headers: map[string]HeaderMapping{"accept": {Exact: "application/json"}},
 				},
-				Response: MappingResponse{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, BodyFile: "get_product_12345_response.json"},
+				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, BodyFile: "get_product_12345_response.json"},
 			},
 		},
 		{
@@ -70,21 +70,21 @@ func TestLoadMappings(t *testing.T) {
 			rootPath: "testdata/load/valid",
 			wantMappings: Mappings{
 				"GET": []Mapping{{
-					Request: MappingRequest{
+					Request: RequestMapping{
 						Method:  "GET",
 						Path:    PathMapping{Exact: "/product/12345"},
 						Headers: map[string]HeaderMapping{"accept": {Exact: "application/json"}},
 					},
-					Response: MappingResponse{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, BodyFile: "get_product_12345_response.json"},
+					Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, BodyFile: "get_product_12345_response.json"},
 				}},
 				"POST": []Mapping{{
-					Request: MappingRequest{
+					Request: RequestMapping{
 						Method:  "POST",
 						Path:    PathMapping{Exact: "/order"},
 						Headers: map[string]HeaderMapping{"content-type": {Exact: "application/json"}},
 						Body:    BodyMapping{Exact: `{"orderId": "999"}`},
 					},
-					Response: MappingResponse{StatusCode: 200},
+					Response: ResponseMapping{StatusCode: 200},
 				}},
 			},
 		},

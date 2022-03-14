@@ -6,8 +6,8 @@ import (
 )
 
 type Mapping struct {
-	Request  MappingRequest  `json:"request"`
-	Response MappingResponse `json:"response"`
+	Request  RequestMapping  `json:"request"`
+	Response ResponseMapping `json:"response"`
 }
 
 func (m Mapping) MaxScore() int {
@@ -43,26 +43,26 @@ type HeaderMapping struct {
 	Pattern  string `json:"pattern"`
 }
 
-type MappingRequest struct {
+type RequestMapping struct {
 	Method  string                   `json:"method"`
 	Path    PathMapping              `json:"path"`
 	Headers map[string]HeaderMapping `json:"headers"`
 	Body    BodyMapping              `json:"body"`
 }
 
-func (m MappingRequest) HasPath() bool {
+func (m RequestMapping) HasPath() bool {
 	return m.Path.Exact != "" || m.Path.Contains != "" || m.Path.Pattern != ""
 }
 
-func (m MappingRequest) HasHeaders() bool {
+func (m RequestMapping) HasHeaders() bool {
 	return len(m.Headers) > 0
 }
 
-func (m MappingRequest) HasBody() bool {
+func (m RequestMapping) HasBody() bool {
 	return m.Body.Exact != "" || m.Body.Contains != "" || m.Body.Pattern != "" || m.Body.JsonPath != ""
 }
 
-type MappingResponse struct {
+type ResponseMapping struct {
 	StatusCode int               `json:"statusCode"`
 	Headers    map[string]string `json:"headers"`
 	BodyFile   string            `json:"bodyFile"`

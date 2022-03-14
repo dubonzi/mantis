@@ -3,7 +3,7 @@ package app
 var _ Matcher = new(BasicMatcher)
 
 type Matcher interface {
-	Match(Request) (response *MappingResponse)
+	Match(Request) (response *ResponseMapping)
 }
 
 type BasicMatcher struct {
@@ -14,17 +14,17 @@ func NewMatcher(m Mappings) *BasicMatcher {
 	return &BasicMatcher{mappings: m}
 }
 
-func (b *BasicMatcher) Match(r Request) *MappingResponse {
+func (b *BasicMatcher) Match(r Request) *ResponseMapping {
 	res, _ := b.match(r)
 	return res
 }
 
 // TODO: Implement the not found response
 
-func (b *BasicMatcher) match(r Request) (*MappingResponse, bool) {
+func (b *BasicMatcher) match(r Request) (*ResponseMapping, bool) {
 	methodMappings, ok := b.mappings[r.Method]
 	if !ok {
-		return &MappingResponse{}, false
+		return &ResponseMapping{}, false
 	}
 
 	bestCandidate := [2]int{-1, 0} // index, score
@@ -58,7 +58,7 @@ func (b *BasicMatcher) match(r Request) (*MappingResponse, bool) {
 		return &methodMappings[bestCandidate[0]].Response, false
 	}
 
-	return &MappingResponse{}, false
+	return &ResponseMapping{}, false
 }
 
 func (b *BasicMatcher) matchPath(r Request, m Mapping) bool {

@@ -1,0 +1,20 @@
+{
+  "request": {
+    "method": "GET",
+    "path": {
+      "exact": "/bear/123"
+    },
+    "headers": {
+      "accept": {
+        "Authorization": "Bearer Bear"
+      }
+    }
+  },
+  "response": {
+    "statusCode": 200,
+    "headers": {
+      "content-type": "text/plain"
+    },
+    "body": "Not a real bear 🐻"
+  }
+}

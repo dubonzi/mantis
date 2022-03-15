@@ -1,9 +1,36 @@
 package app
 
+import (
+	"encoding/json"
+	"net/http"
+	"strings"
+)
+
 var _ Matcher = new(BasicMatcher)
 
+const (
+	NoMappingFoundMessage = "No mapping found for the request"
+)
+
+type MatcherResult struct {
+	StatusCode int
+	Headers    map[string]string
+	Body       interface{}
+}
+
+func (m MatcherResult) String() string {
+	s, _ := json.Marshal(m)
+	return string(s)
+}
+
+type NotFoundResponse struct {
+	Message        string          `json:"message"`
+	Request        Request         `json:"request"`
+	ClosestMapping *RequestMapping `json:"closestMapping,omitempty"`
+}
+
 type Matcher interface {
-	Match(Request) (response *ResponseMapping)
+	Match(Request) (result MatcherResult)
 }
 
 type BasicMatcher struct {
@@ -14,18 +41,38 @@ func NewMatcher(m Mappings) *BasicMatcher {
 	return &BasicMatcher{mappings: m}
 }
 
-func (b *BasicMatcher) Match(r Request) *ResponseMapping {
-	res, _ := b.match(r)
-	return res
+func (b *BasicMatcher) Match(r Request) MatcherResult {
+	mapping, matched := b.match(r)
+
+	if mapping == nil {
+		return MatcherResult{
+			StatusCode: http.StatusNotFound,
+			Body:       b.buildNotFoundResponse(r, nil),
+		}
+	}
+
+	var result MatcherResult
+
+	if !matched {
+		result.Body = b.buildNotFoundResponse(r, &mapping.Request)
+		result.StatusCode = http.StatusNotFound
+		return result
+	}
+
+	if mapping.Response.Body != "" {
+		result.Body = mapping.Response.Body
+
+	}
+	result.StatusCode = mapping.Response.StatusCode
+	result.Headers = mapping.Response.Headers
+
+	return result
 }
 
-// TODO: Implement the not found response
-// TODO: Implement closest mapping response
-
-func (b *BasicMatcher) match(r Request) (*ResponseMapping, bool) {
+func (b *BasicMatcher) match(r Request) (*Mapping, bool) {
 	methodMappings, ok := b.mappings[r.Method]
 	if !ok {
-		return &ResponseMapping{}, false
+		return nil, false
 	}
 
 	bestCandidate := [2]int{-1, 0} // index, score
@@ -46,7 +93,7 @@ func (b *BasicMatcher) match(r Request) (*ResponseMapping, bool) {
 		}
 
 		if score == mapping.MaxScore() {
-			return &mapping.Response, true
+			return &mapping, true
 		}
 
 		if score > bestCandidate[1] {
@@ -56,10 +103,10 @@ func (b *BasicMatcher) match(r Request) (*ResponseMapping, bool) {
 	}
 
 	if bestCandidate[0] >= 0 {
-		return &methodMappings[bestCandidate[0]].Response, false
+		return &methodMappings[bestCandidate[0]], false
 	}
 
-	return &ResponseMapping{}, false
+	return nil, false
 }
 
 func (b *BasicMatcher) matchPath(r Request, m Mapping) bool {
@@ -73,7 +120,7 @@ func (b *BasicMatcher) matchPath(r Request, m Mapping) bool {
 func (b *BasicMatcher) matchHeaders(r Request, m Mapping) bool {
 	for mKey, mVal := range m.Request.Headers {
 		if mVal.Exact != "" {
-			rVal, ok := r.Headers[mKey]
+			rVal, ok := r.Headers[strings.ToLower(mKey)]
 			if !ok {
 				return false
 			}
@@ -91,4 +138,12 @@ func (b *BasicMatcher) matchBody(r Request, m Mapping) bool {
 		return r.Body == m.Request.Body.Exact
 	}
 	return true
+}
+
+func (b *BasicMatcher) buildNotFoundResponse(r Request, mapping *RequestMapping) NotFoundResponse {
+	return NotFoundResponse{
+		Message:        NoMappingFoundMessage,
+		Request:        r,
+		ClosestMapping: mapping,
+	}
 }

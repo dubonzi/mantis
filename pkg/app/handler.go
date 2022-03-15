@@ -1,6 +1,8 @@
 package app
 
 import (
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -20,7 +22,7 @@ func RequestFromFiber(r *fiber.Request) Request {
 	}
 	r.Header.VisitAll(
 		func(key, value []byte) {
-			req.Headers[string(key)] = string(value)
+			req.Headers[strings.ToLower(string(key))] = string(value)
 		},
 	)
 	return req
@@ -41,5 +43,12 @@ func (h Handler) All(c *fiber.Ctx) error {
 		c.Response().Header.Add(k, v)
 	}
 
-	return c.Status(res.StatusCode).SendString(res.Body)
+	c.Status(res.StatusCode)
+
+	switch b := res.Body.(type) {
+	case string:
+		return c.SendString(b)
+	default:
+		return c.JSON(b)
+	}
 }

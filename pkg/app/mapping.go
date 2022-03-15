@@ -25,22 +25,22 @@ func (m Mapping) MaxScore() int {
 }
 
 type PathMapping struct {
-	Exact    string `json:"exact"`
-	Contains string `json:"contains"`
-	Pattern  string `json:"pattern"`
+	Exact    string `json:"exact,omitempty"`
+	Contains string `json:"contains,omitempty"`
+	Pattern  string `json:"pattern,omitempty"`
 }
 
 type BodyMapping struct {
-	Exact    string `json:"exact"`
-	Contains string `json:"contains"`
-	Pattern  string `json:"pattern"`
-	JsonPath string `json:"jsonPath"`
+	Exact    string `json:"exact,omitempty"`
+	Contains string `json:"contains,omitempty"`
+	Pattern  string `json:"pattern,omitempty"`
+	JsonPath string `json:"jsonPath,omitempty"`
 }
 
 type HeaderMapping struct {
-	Exact    string `json:"exact"`
-	Contains string `json:"contains"`
-	Pattern  string `json:"pattern"`
+	Exact    string `json:"exact,omitempty"`
+	Contains string `json:"contains,omitempty"`
+	Pattern  string `json:"pattern,omitempty"`
 }
 
 type RequestMapping struct {

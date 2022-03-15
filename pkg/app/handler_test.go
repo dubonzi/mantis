@@ -27,7 +27,7 @@ func TestRequest(t *testing.T) {
 			want: Request{
 				Method:  "POST",
 				Path:    "/gopher",
-				Headers: map[string]string{"Content-Type": "application/json"},
+				Headers: map[string]string{"content-type": "application/json"},
 				Body:    "{\"name\": \"gopher 1\"}",
 			},
 		},
@@ -43,7 +43,7 @@ func TestRequest(t *testing.T) {
 			want: Request{
 				Method:  "GET",
 				Path:    "/gopher/2",
-				Headers: map[string]string{"Accept": "application/json"},
+				Headers: map[string]string{"accept": "application/json"},
 			},
 		},
 		{

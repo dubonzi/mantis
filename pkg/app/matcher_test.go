@@ -72,7 +72,7 @@ func getMappings() Mappings {
 			},
 			{
 				Request:  RequestMapping{Method: "GET", Path: PathMapping{Exact: "/match/me/123?file=true"}},
-				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"Content-type": "application/json"}, BodyFile: "body_from_file.json"},
+				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"Content-type": "application/json"}, Body: `{"message": "Hello from the body file"}`},
 			},
 			{
 				Request:  RequestMapping{Method: "GET", Path: PathMapping{Exact: "/simple"}},

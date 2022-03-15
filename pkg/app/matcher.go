@@ -20,6 +20,7 @@ func (b *BasicMatcher) Match(r Request) *ResponseMapping {
 }
 
 // TODO: Implement the not found response
+// TODO: Implement closest mapping response
 
 func (b *BasicMatcher) match(r Request) (*ResponseMapping, bool) {
 	methodMappings, ok := b.mappings[r.Method]

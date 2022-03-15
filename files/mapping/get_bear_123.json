@@ -5,8 +5,8 @@
       "exact": "/bear/123"
     },
     "headers": {
-      "accept": {
-        "Authorization": "Bearer Bear"
+      "Authorization": {
+        "exact": "Bearer Bear"
       }
     }
   },

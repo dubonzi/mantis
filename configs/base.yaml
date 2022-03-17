@@ -3,9 +3,10 @@ ignite:
     port: 8080
     config:
       disableStartupMessage: true
-  zerolog:
-    level: TRACE
-    formatter: TEXT
+  zap:
+    console:
+      level: TRACE
+      formatter: JSON
 
 fx:
   disableLogging: true

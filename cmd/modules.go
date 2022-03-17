@@ -4,17 +4,18 @@ import (
 	"context"
 
 	"github.com/americanas-go/config"
-	"github.com/americanas-go/ignite/gofiber/fiber.v2"
+	igzerolog "github.com/americanas-go/ignite/go.uber.org/zap.v1"
+	igfiber "github.com/americanas-go/ignite/gofiber/fiber.v2"
 	status "github.com/americanas-go/ignite/gofiber/fiber.v2/plugins/contrib/americanas-go/rest-response.v1"
-	igzerolog "github.com/americanas-go/ignite/rs/zerolog.v1"
 	"github.com/americanas-go/log"
 	"github.com/dubonzi/wirego/pkg/app"
+	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 )
 
 func mainModule() fx.Option {
 	config.Load()
-	igzerolog.NewLogger()
+	log.SetGlobalLogger(igzerolog.NewLogger())
 
 	return fx.Options(
 		fx.Provide(
@@ -46,11 +47,12 @@ func loaderModule() fx.Option {
 func serverModule() fx.Option {
 	return fx.Invoke(
 		func(lc fx.Lifecycle, ctx context.Context, handler *app.Handler) {
-			srv := fiber.NewServer(
+			srv := igfiber.NewServer(
 				ctx,
 				status.Register,
 			)
 
+			srv.App().Use("/*", fiberErrorLogger)
 			srv.All("/*", handler.All)
 
 			lc.Append(
@@ -75,4 +77,12 @@ func fxLogger() fx.Option {
 		return fx.NopLogger
 	}
 	return fx.Provide()
+}
+
+func fiberErrorLogger(c *fiber.Ctx) error {
+	err := c.Next()
+	if err != nil {
+		log.Error("captured error from handler: ", err)
+	}
+	return err
 }

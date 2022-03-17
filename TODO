@@ -1,11 +1,12 @@
 README
-Loading body from file
 Improve logging
 Partial Body Matching (contains, jsonpath (https://github.com/ohler55/ojg))
-Regex Matching (cache compiled regex's)
+Regex Matching (cache compiled regex)
 Possibly remove ignite dependency or at least abstract ignite configurations
 Improve configuration
 Improve/refactor validation
 Dockerfile
+Display differences when no match is found
 Performance tests
 APM/Metrics
+Add a 'Context' with an API to track Mappings/Matching statuses

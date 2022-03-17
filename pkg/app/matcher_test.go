@@ -16,31 +16,32 @@ func TestMatcher(t *testing.T) {
 		{
 			name:      "Should match simple request",
 			input:     Request{Method: "GET", Path: "/simple"},
-			want:      MatcherResult{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "I'm a simple response"},
+			want:      MatcherResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: "I'm a simple response"},
 			wantMatch: true,
 		},
 		{
 			name:      "Should match GET request with header",
 			input:     Request{Method: "GET", Path: "/bears/321", Headers: map[string]string{"authorization": "Bearer Bear 🐻"}},
-			want:      MatcherResult{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "🐻"},
+			want:      MatcherResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: "🐻"},
 			wantMatch: true,
 		},
 		{
 			name:      "Should match GET request and load body from file",
 			input:     Request{Method: "GET", Path: "/match/me/123?file=true"},
-			want:      MatcherResult{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"message": "Hello from the body file"}`},
+			want:      MatcherResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "application/json"}, Body: `{"message": "Hello from the body file"}`},
 			wantMatch: true,
 		},
 		{
 			name:      "Should match POST request with body",
 			input:     Request{Method: "POST", Path: "/order", Headers: map[string]string{"authorization": "Bearer ItsMe"}, Body: `{"cart": "555"}`},
-			want:      MatcherResult{StatusCode: 201, Headers: map[string]string{"location": "12345"}},
+			want:      MatcherResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "12345"}},
 			wantMatch: true,
 		},
 		{
 			name:  "Should return 404 with the closest mapping when no match is found",
 			input: Request{Method: "GET", Path: "/bears/321"},
 			want: MatcherResult{
+				Matched:    false,
 				StatusCode: 404,
 				Body: NotFoundResponse{
 					Message: NoMappingFoundMessage,

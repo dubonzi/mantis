@@ -3,6 +3,12 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/americanas-go/log"
+)
+
+const (
+	StartingScore = 1
 )
 
 type Mapping struct {
@@ -11,7 +17,7 @@ type Mapping struct {
 }
 
 func (m Mapping) MaxScore() int {
-	score := 1 // Starts at 1 since Path is required
+	score := StartingScore // Starts at 1 since Path is required
 
 	if m.Request.HasBody() {
 		score++
@@ -103,6 +109,7 @@ func (m Mappings) Put(mapping Mapping) error {
 		return err
 	}
 
+	log.Tracef("adding mapping: %+v", mapping)
 	m[mapping.Request.Method] = append(m[mapping.Request.Method], mapping)
 	return nil
 }

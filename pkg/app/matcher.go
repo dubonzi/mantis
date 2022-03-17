@@ -16,6 +16,7 @@ type MatcherResult struct {
 	StatusCode int
 	Headers    map[string]string
 	Body       interface{}
+	Matched    bool
 }
 
 func (m MatcherResult) String() string {
@@ -44,14 +45,15 @@ func NewMatcher(m Mappings) *BasicMatcher {
 func (b *BasicMatcher) Match(r Request) MatcherResult {
 	mapping, matched := b.match(r)
 
-	if mapping == nil {
-		return MatcherResult{
-			StatusCode: http.StatusNotFound,
-			Body:       b.buildNotFoundResponse(r, nil),
-		}
+	result := MatcherResult{
+		Matched: matched,
 	}
 
-	var result MatcherResult
+	if mapping == nil {
+		result.StatusCode = http.StatusNotFound
+		result.Body = b.buildNotFoundResponse(r, nil)
+		return result
+	}
 
 	if !matched {
 		result.Body = b.buildNotFoundResponse(r, &mapping.Request)

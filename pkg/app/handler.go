@@ -3,6 +3,7 @@ package app
 import (
 	"strings"
 
+	"github.com/americanas-go/log"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -37,7 +38,15 @@ func NewHandler(matcher Matcher) *Handler {
 }
 
 func (h Handler) All(c *fiber.Ctx) error {
-	res := h.matcher.Match(RequestFromFiber(c.Request()))
+	req := RequestFromFiber(c.Request())
+	res := h.matcher.Match(req)
+
+	if !res.Matched {
+		log.WithFields(log.Fields{
+			"request": req,
+			"result":  res,
+		}).Warn("no match found")
+	}
 
 	for k, v := range res.Headers {
 		c.Response().Header.Add(k, v)

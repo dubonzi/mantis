@@ -32,8 +32,20 @@ func TestMatcher(t *testing.T) {
 			wantMatch: true,
 		},
 		{
+			name:      "Should match GET request if path contains request",
+			input:     Request{Method: "GET", Path: "/thispath/contains/123"},
+			want:      MatcherResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: `Mapping contains path`},
+			wantMatch: true,
+		},
+		{
 			name:      "Should match POST request with body",
 			input:     Request{Method: "POST", Path: "/order", Headers: map[string]string{"authorization": "Bearer ItsMe"}, Body: `{"cart": "555"}`},
+			want:      MatcherResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "12345"}},
+			wantMatch: true,
+		},
+		{
+			name:      "Should match POST request if body and header contain request",
+			input:     Request{Method: "POST", Path: "/bears/contains", Headers: map[string]string{"content-type": "application/json"}, Body: `{"name": "Mr Bear", "honey": true}`},
 			want:      MatcherResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "12345"}},
 			wantMatch: true,
 		},
@@ -90,6 +102,10 @@ func getMappings() Mappings {
 				Request:  RequestMapping{Method: "GET", Path: PathMapping{Exact: "/simple"}},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "I'm a simple response"},
 			},
+			{
+				Request:  RequestMapping{Method: "GET", Path: PathMapping{Contains: "contains/123"}},
+				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping contains path"},
+			},
 		},
 		"POST": []Mapping{
 			{
@@ -104,6 +120,15 @@ func getMappings() Mappings {
 			{
 				Request:  RequestMapping{Method: "POST", Path: PathMapping{Exact: "/order"}, Body: BodyMapping{Exact: `{"cart": "555"}`}},
 				Response: ResponseMapping{StatusCode: 401},
+			},
+			{
+				Request: RequestMapping{
+					Method:  "POST",
+					Headers: map[string]HeaderMapping{"content-type": {Contains: "json"}},
+					Path:    PathMapping{Exact: "/bears/contains"},
+					Body:    BodyMapping{Contains: `"honey": true`},
+				},
+				Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "12345"}},
 			},
 		},
 		"DELETE": []Mapping{

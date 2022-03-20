@@ -116,20 +116,28 @@ func (b *BasicMatcher) matchPath(r Request, m Mapping) bool {
 		return r.Path == m.Request.Path.Exact
 	}
 
+	if m.Request.Path.Contains != "" {
+		return strings.Contains(r.Path, m.Request.Path.Contains)
+	}
+
 	return true
 }
 
 func (b *BasicMatcher) matchHeaders(r Request, m Mapping) bool {
 	for mKey, mVal := range m.Request.Headers {
-		if mVal.Exact != "" {
-			rVal, ok := r.Headers[strings.ToLower(mKey)]
-			if !ok {
-				return false
-			}
-			if rVal != mVal.Exact {
-				return false
-			}
+		rVal, ok := r.Headers[strings.ToLower(mKey)]
+		if !ok {
+			return false
 		}
+
+		if mVal.Exact != "" {
+			return rVal == mVal.Exact
+		}
+
+		if mVal.Contains != "" {
+			return strings.Contains(rVal, mVal.Contains)
+		}
+
 	}
 
 	return true
@@ -139,6 +147,11 @@ func (b *BasicMatcher) matchBody(r Request, m Mapping) bool {
 	if m.Request.Body.Exact != "" {
 		return r.Body == m.Request.Body.Exact
 	}
+
+	if m.Request.Body.Contains != "" {
+		return strings.Contains(r.Body, m.Request.Body.Contains)
+	}
+
 	return true
 }
 

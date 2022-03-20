@@ -15,7 +15,7 @@ const (
 type MatcherResult struct {
 	StatusCode int
 	Headers    map[string]string
-	Body       interface{}
+	Body       any
 	Matched    bool
 }
 

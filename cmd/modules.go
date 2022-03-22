@@ -4,52 +4,40 @@ import (
 	"context"
 
 	"github.com/americanas-go/config"
-	igzerolog "github.com/americanas-go/ignite/go.uber.org/zap.v1"
 	igfiber "github.com/americanas-go/ignite/gofiber/fiber.v2"
-	status "github.com/americanas-go/ignite/gofiber/fiber.v2/plugins/contrib/americanas-go/rest-response.v1"
+	"github.com/americanas-go/ignite/gofiber/fiber.v2/plugins/contrib/americanas-go/health.v1"
 	"github.com/americanas-go/log"
+	"github.com/americanas-go/log/contrib/go.uber.org/zap.v1"
 	"github.com/dubonzi/wirego/pkg/app"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 )
 
 func mainModule() fx.Option {
+	loadDefaultConfig()
 	config.Load()
-	log.SetGlobalLogger(igzerolog.NewLogger())
+	log.SetGlobalLogger(zap.NewLoggerWithOptions(zapOptions()))
 
 	return fx.Options(
 		fx.Provide(
 			context.Background,
 			app.NewHandler,
 			fx.Annotate(app.NewMatcher, fx.As(new(app.Matcher))),
+			fx.Annotate(app.NewFileLoader, fx.As(new(app.Loader))),
 			func(loader app.Loader) (app.Mappings, error) { return loader.GetMappings() },
 		),
 		serverModule(),
-		loaderModule(),
+		healthModule(),
 		fxLogger(),
 	)
-}
-
-func loaderModule() fx.Option {
-	mode := config.String("loader.mode")
-
-	switch mode {
-	case "db":
-		return fx.Provide()
-	default:
-		return fx.Provide(
-			fx.Annotate(app.NewFileLoader, fx.As(new(app.Loader))),
-		)
-	}
-
 }
 
 func serverModule() fx.Option {
 	return fx.Invoke(
 		func(lc fx.Lifecycle, ctx context.Context, handler *app.Handler) {
-			srv := igfiber.NewServer(
+			srv := igfiber.NewServerWithOptions(
 				ctx,
-				status.Register,
+				serverFiberOptions(),
 			)
 
 			srv.App().Use("/*", fiberErrorLogger)
@@ -67,16 +55,40 @@ func serverModule() fx.Option {
 					},
 				},
 			)
+		},
+	)
+}
 
+func healthModule() fx.Option {
+	return fx.Invoke(
+		func(lc fx.Lifecycle, handler *app.Handler) {
+			ctx := context.Background()
+			srv := igfiber.NewServerWithOptions(
+				ctx,
+				healthFiberOptions(),
+				health.Register,
+			)
+
+			lc.Append(
+				fx.Hook{
+					OnStart: func(c context.Context) error {
+						go srv.Serve(ctx)
+						return nil
+					},
+					OnStop: func(c context.Context) error {
+						return srv.App().Shutdown()
+					},
+				},
+			)
 		},
 	)
 }
 
 func fxLogger() fx.Option {
-	if config.Bool("fx.disableLogging") {
-		return fx.NopLogger
+	if config.Bool("fx.log.enable") {
+		return fx.Provide()
 	}
-	return fx.Provide()
+	return fx.NopLogger
 }
 
 func fiberErrorLogger(c *fiber.Ctx) error {

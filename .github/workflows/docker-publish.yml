@@ -2,16 +2,18 @@ name: Docker
 
 on:
   push:
-    tags: [ 'v*.*.*' ]
+    tags: ["v*.*.*"]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
-
 jobs:
-  build:
+  build-test:
+    uses: dubonzi/wirego/.github/workflows/go.yml
 
+  build-image:
+    needs: [build-test]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -54,5 +56,3 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-

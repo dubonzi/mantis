@@ -14,6 +14,9 @@ func loadDefaultConfig() {
 
 	config.Add("health.port", 8081, "Health endpoint port (must not be the same as the server port)")
 
+	config.Add("loader.path.mapping", "files/mapping", "Path to the folder containing the mapping files")
+	config.Add("loader.path.response", "files/response", "Path to the folder containing the response files")
+
 	config.Add("log.level", "INFO", "Logging level")
 	config.Add("log.format", "TEXT", "Logging format")
 

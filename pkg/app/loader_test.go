@@ -83,7 +83,7 @@ func TestDecodeFile(t *testing.T) {
 		wantMapping Mapping
 	}{
 		{
-			name: "Should decode file successfuly",
+			name: "Should decode file successfully",
 			path: "testdata/decode/get_product_12345.json",
 			wantMapping: Mapping{
 				Request: RequestMapping{

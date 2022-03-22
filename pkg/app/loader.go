@@ -32,14 +32,7 @@ func NewFileLoader() *FileLoader {
 
 func (f *FileLoader) GetMappings() (Mappings, error) {
 	mappingsPath := config.String("loader.path.mapping")
-	if mappingsPath == "" {
-		mappingsPath = "files/mapping"
-	}
-
 	responsesPath := config.String("loader.path.response")
-	if responsesPath == "" {
-		responsesPath = "files/response"
-	}
 
 	mappings := make(Mappings)
 	return mappings, f.loadMappings(mappingsPath, responsesPath, mappings)
@@ -77,7 +70,7 @@ func (f *FileLoader) loadMappings(mappingsPath string, responsesPath string, map
 		return err
 	}
 
-	log.Info("mappings loaded successfuly")
+	log.Info("mappings loaded successfully")
 	return nil
 }
 

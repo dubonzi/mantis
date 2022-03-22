@@ -10,7 +10,7 @@ env:
 
 jobs:
   build-test:
-    uses: dubonzi/wirego/.github/workflows/go.yml
+    uses: ./.github/workflows/go.yml
 
   build-image:
     needs: [build-test]

@@ -8,10 +8,10 @@ import (
 )
 
 type Request struct {
-	Path    string
-	Method  string
-	Headers map[string]string
-	Body    string
+	Path    string            `json:"path"`
+	Method  string            `json:"method"`
+	Headers map[string]string `json:"headers"`
+	Body    string            `json:"body"`
 }
 
 func RequestFromFiber(r *fiber.Request) Request {

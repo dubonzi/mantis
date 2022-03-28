@@ -1,4 +1,4 @@
-module github.com/dubonzi/wirego
+module github.com/dubonzi/mantis
 
 go 1.18
 

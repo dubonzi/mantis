@@ -1,8 +1,10 @@
 README
+Add delay option to response (fixed and maybe dynamic)
 JsonPath Body Matching (https://github.com/ohler55/ojg)
 Improve/refactor validation
 Possibly remove ignite dependency
 Performance tests
 Display differences when no match is found
 Add a 'Context' with an API to track Mappings/Matching statuses
+Add scenarios support
 APM/Metrics

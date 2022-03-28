@@ -29,7 +29,7 @@ func serverFiberOptions() *igfiber.Options {
 		Port: config.Int("server.port"),
 		Type: "REST",
 		Config: &fiber.Config{
-			AppName:               "Wirego Server",
+			AppName:               "Mantis Server",
 			DisableStartupMessage: config.Bool("server.disableStartupMessage"),
 		},
 	}

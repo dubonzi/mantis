@@ -5,13 +5,13 @@ WORKDIR /app
 
 COPY . .
 
-RUN go build -o wirego cmd/*.go
+RUN go build -o mantis cmd/*.go
 
 
 FROM alpine AS app
 
 WORKDIR /app
 
-COPY --from=build /app/wirego .
+COPY --from=build /app/mantis .
 
-CMD [ "/app/wirego" ]
+CMD [ "/app/mantis" ]

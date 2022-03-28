@@ -22,9 +22,10 @@ func mainModule() fx.Option {
 		fx.Provide(
 			context.Background,
 			app.NewHandler,
+			app.NewRegexCache,
+			app.NewFileLoader,
+			func(loader *app.FileLoader) (app.Mappings, error) { return loader.GetMappings() },
 			fx.Annotate(app.NewMatcher, fx.As(new(app.Matcher))),
-			fx.Annotate(app.NewFileLoader, fx.As(new(app.Loader))),
-			func(loader app.Loader) (app.Mappings, error) { return loader.GetMappings() },
 		),
 		serverModule(),
 		healthModule(),

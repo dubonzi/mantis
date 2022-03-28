@@ -35,11 +35,15 @@ type Matcher interface {
 }
 
 type BasicMatcher struct {
-	mappings Mappings
+	mappings   Mappings
+	regexCache *RegexCache
 }
 
-func NewMatcher(m Mappings) *BasicMatcher {
-	return &BasicMatcher{mappings: m}
+func NewMatcher(m Mappings, r *RegexCache) *BasicMatcher {
+	return &BasicMatcher{
+		mappings:   m,
+		regexCache: r,
+	}
 }
 
 func (b *BasicMatcher) Match(r Request) MatcherResult {
@@ -120,6 +124,10 @@ func (b *BasicMatcher) matchPath(r Request, m Mapping) bool {
 		return strings.Contains(r.Path, m.Request.Path.Contains)
 	}
 
+	if m.Request.Path.Pattern != "" {
+		return b.regexCache.Match(m.Request.Path.Pattern, r.Path)
+	}
+
 	return true
 }
 
@@ -131,11 +139,21 @@ func (b *BasicMatcher) matchHeaders(r Request, m Mapping) bool {
 		}
 
 		if mVal.Exact != "" {
-			return rVal == mVal.Exact
+			if rVal != mVal.Exact {
+				return false
+			}
 		}
 
 		if mVal.Contains != "" {
-			return strings.Contains(rVal, mVal.Contains)
+			if !strings.Contains(rVal, mVal.Contains) {
+				return false
+			}
+		}
+
+		if mVal.Pattern != "" {
+			if !b.regexCache.Match(mVal.Pattern, rVal) {
+				return false
+			}
 		}
 
 	}
@@ -150,6 +168,10 @@ func (b *BasicMatcher) matchBody(r Request, m Mapping) bool {
 
 	if m.Request.Body.Contains != "" {
 		return strings.Contains(r.Body, m.Request.Body.Contains)
+	}
+
+	if m.Request.Body.Pattern != "" {
+		return b.regexCache.Match(m.Request.Body.Pattern, r.Body)
 	}
 
 	return true

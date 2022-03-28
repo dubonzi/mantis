@@ -20,14 +20,12 @@ func FileNotFound(path string) error {
 	return errors.Errorf("file '%s' not found", path)
 }
 
-type Loader interface {
-	GetMappings() (Mappings, error)
+type FileLoader struct {
+	regexCache *RegexCache
 }
 
-type FileLoader struct{}
-
-func NewFileLoader() *FileLoader {
-	return &FileLoader{}
+func NewFileLoader(regexCache *RegexCache) *FileLoader {
+	return &FileLoader{regexCache}
 }
 
 func (f *FileLoader) GetMappings() (Mappings, error) {
@@ -52,14 +50,19 @@ func (f *FileLoader) loadMappings(mappingsPath string, responsesPath string, map
 				if m.Response.BodyFile != "" {
 					bodyContent, err := loadFile(filepath.Join(responsesPath, m.Response.BodyFile))
 					if err != nil {
-						return err
+						return errors.Wrapf(err, "error loading response body file for mapping file [ %s ]", path)
 					}
 					m.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
 				}
 
+				err = f.regexCache.AddFromMapping(m)
+				if err != nil {
+					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
+				}
+
 				err = mappings.Put(m)
 				if err != nil {
-					return err
+					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}
 			}
 			return nil

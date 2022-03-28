@@ -1,11 +1,8 @@
 README
-Partial Body Matching (jsonpath (https://github.com/ohler55/ojg))
-Regex Matching (cache compiled regex)
-Possibly remove ignite dependency or at least abstract ignite configurations
-Improve configuration
+JsonPath Body Matching (https://github.com/ohler55/ojg)
 Improve/refactor validation
-Dockerfile
-Display differences when no match is found
+Possibly remove ignite dependency
 Performance tests
-APM/Metrics
+Display differences when no match is found
 Add a 'Context' with an API to track Mappings/Matching statuses
+APM/Metrics

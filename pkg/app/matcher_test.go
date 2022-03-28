@@ -38,6 +38,17 @@ func TestMatcher(t *testing.T) {
 			wantMatch: true,
 		},
 		{
+			name:      "Should match GET request if path matches regex",
+			input:     Request{Method: "GET", Path: "/regex/231832"},
+			want:      MatcherResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: `Mapping with regex on path`},
+			wantMatch: true,
+		},
+		{
+			name:      "Should not match GET request if path does not match regex",
+			input:     Request{Method: "GET", Path: "/regex/abc"},
+			wantMatch: false,
+		},
+		{
 			name:      "Should match POST request with body",
 			input:     Request{Method: "POST", Path: "/order", Headers: map[string]string{"authorization": "Bearer ItsMe"}, Body: `{"cart": "555"}`},
 			want:      MatcherResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "12345"}},
@@ -48,6 +59,17 @@ func TestMatcher(t *testing.T) {
 			input:     Request{Method: "POST", Path: "/bears/contains", Headers: map[string]string{"content-type": "application/json"}, Body: `{"name": "Mr Bear", "honey": true}`},
 			want:      MatcherResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "12345"}},
 			wantMatch: true,
+		},
+		{
+			name:      "Should match POST request if body and header match regex",
+			input:     Request{Method: "POST", Path: "/gopher/regex", Headers: map[string]string{"content-type": "application/json"}, Body: `{"name": "Mr Gopher", "honey": true}`},
+			want:      MatcherResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "999"}},
+			wantMatch: true,
+		},
+		{
+			name:      "Should not match a request when the method is not mapped",
+			input:     Request{Method: "HEAD", Path: "/gopher/regex", Headers: map[string]string{"content-type": "application/json"}, Body: `{"name": "Mr Gopher", "honey": true}`},
+			wantMatch: false,
 		},
 		{
 			name:  "Should return 404 with the closest mapping when no match is found",
@@ -69,16 +91,26 @@ func TestMatcher(t *testing.T) {
 		},
 	}
 
-	matcher := NewMatcher(getMappings())
+	mappings := getMappings()
+	regexCache := NewRegexCache()
+	for _, method := range mappings {
+		for _, mapping := range method {
+			_ = regexCache.AddFromMapping(mapping)
+		}
+	}
+	matcher := NewMatcher(mappings, regexCache)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			response := matcher.Match(tt.input)
-			if !assert.IsEqual(response, tt.want) {
+			if response.Matched != tt.wantMatch {
+				t.Logf("Matching conditions differ: got '%t', want '%t'", response.Matched, tt.wantMatch)
+			}
+
+			if tt.wantMatch && !assert.IsEqual(response, tt.want) {
 				t.Logf("%s doest not equal %s", response, tt.want)
 				t.FailNow()
 			}
-			assert.Equal(t, response, tt.want)
 		})
 	}
 }
@@ -106,6 +138,10 @@ func getMappings() Mappings {
 				Request:  RequestMapping{Method: "GET", Path: PathMapping{Contains: "contains/123"}},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping contains path"},
 			},
+			{
+				Request:  RequestMapping{Method: "GET", Path: PathMapping{Pattern: "regex/[0-9]+"}},
+				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping with regex on path"},
+			},
 		},
 		"POST": []Mapping{
 			{
@@ -129,6 +165,15 @@ func getMappings() Mappings {
 					Body:    BodyMapping{Contains: `"honey": true`},
 				},
 				Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "12345"}},
+			},
+			{
+				Request: RequestMapping{
+					Method:  "POST",
+					Headers: map[string]HeaderMapping{"content-type": {Pattern: "^application/(json|xml){1}$"}},
+					Path:    PathMapping{Exact: "/gopher/regex"},
+					Body:    BodyMapping{Pattern: `"name":\s*"[A-z\s]+"`},
+				},
+				Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "999"}},
 			},
 		},
 		"DELETE": []Mapping{

@@ -30,16 +30,16 @@ func RequestFromFiber(r *fiber.Request) Request {
 }
 
 type Handler struct {
-	matcher Matcher
+	service Service
 }
 
-func NewHandler(matcher Matcher) *Handler {
-	return &Handler{matcher}
+func NewHandler(service Service) *Handler {
+	return &Handler{service}
 }
 
 func (h Handler) All(c *fiber.Ctx) error {
 	req := RequestFromFiber(c.Request())
-	res := h.matcher.Match(req)
+	res := h.service.MatchRequest(req)
 
 	if !res.Matched {
 		log.WithFields(log.Fields{

@@ -1,8 +1,6 @@
 package app
 
 import (
-	"encoding/json"
-	"net/http"
 	"strings"
 )
 
@@ -12,26 +10,8 @@ const (
 	NoMappingFoundMessage = "No mapping found for the request"
 )
 
-type MatcherResult struct {
-	StatusCode int
-	Headers    map[string]string
-	Body       any
-	Matched    bool
-}
-
-func (m MatcherResult) String() string {
-	s, _ := json.Marshal(m)
-	return string(s)
-}
-
-type NotFoundResponse struct {
-	Message        string          `json:"message"`
-	Request        Request         `json:"request"`
-	ClosestMapping *RequestMapping `json:"closestMapping,omitempty"`
-}
-
 type Matcher interface {
-	Match(Request) (result MatcherResult)
+	Match(Request) (mapping *Mapping, matched bool)
 }
 
 type BasicMatcher struct {
@@ -46,36 +26,7 @@ func NewMatcher(m Mappings, r *RegexCache) *BasicMatcher {
 	}
 }
 
-func (b *BasicMatcher) Match(r Request) MatcherResult {
-	mapping, matched := b.match(r)
-
-	result := MatcherResult{
-		Matched: matched,
-	}
-
-	if mapping == nil {
-		result.StatusCode = http.StatusNotFound
-		result.Body = b.buildNotFoundResponse(r, nil)
-		return result
-	}
-
-	if !matched {
-		result.Body = b.buildNotFoundResponse(r, &mapping.Request)
-		result.StatusCode = http.StatusNotFound
-		return result
-	}
-
-	if mapping.Response.Body != "" {
-		result.Body = mapping.Response.Body
-
-	}
-	result.StatusCode = mapping.Response.StatusCode
-	result.Headers = mapping.Response.Headers
-
-	return result
-}
-
-func (b *BasicMatcher) match(r Request) (*Mapping, bool) {
+func (b *BasicMatcher) Match(r Request) (*Mapping, bool) {
 	methodMappings, ok := b.mappings[r.Method]
 	if !ok {
 		return nil, false
@@ -175,12 +126,4 @@ func (b *BasicMatcher) matchBody(r Request, m Mapping) bool {
 	}
 
 	return true
-}
-
-func (b *BasicMatcher) buildNotFoundResponse(r Request, mapping *RequestMapping) NotFoundResponse {
-	return NotFoundResponse{
-		Message:        NoMappingFoundMessage,
-		Request:        r,
-		ClosestMapping: mapping,
-	}
 }

@@ -10,37 +10,37 @@ func TestMatcher(t *testing.T) {
 	tests := []struct {
 		name      string
 		input     Request
-		want      MatcherResult
+		want      MatchResult
 		wantMatch bool
 	}{
 		{
 			name:      "Should match simple request",
 			input:     Request{Method: "GET", Path: "/simple"},
-			want:      MatcherResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: "I'm a simple response"},
+			want:      MatchResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: "I'm a simple response"},
 			wantMatch: true,
 		},
 		{
 			name:      "Should match GET request with header",
 			input:     Request{Method: "GET", Path: "/bears/321", Headers: map[string]string{"authorization": "Bearer Bear 🐻"}},
-			want:      MatcherResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: "🐻"},
+			want:      MatchResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: "🐻"},
 			wantMatch: true,
 		},
 		{
 			name:      "Should match GET request and load body from file",
 			input:     Request{Method: "GET", Path: "/match/me/123?file=true"},
-			want:      MatcherResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "application/json"}, Body: `{"message": "Hello from the body file"}`},
+			want:      MatchResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "application/json"}, Body: `{"message": "Hello from the body file"}`},
 			wantMatch: true,
 		},
 		{
 			name:      "Should match GET request if path contains request",
 			input:     Request{Method: "GET", Path: "/thispath/contains/123"},
-			want:      MatcherResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: `Mapping contains path`},
+			want:      MatchResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: `Mapping contains path`},
 			wantMatch: true,
 		},
 		{
 			name:      "Should match GET request if path matches regex",
 			input:     Request{Method: "GET", Path: "/regex/231832"},
-			want:      MatcherResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: `Mapping with regex on path`},
+			want:      MatchResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: `Mapping with regex on path`},
 			wantMatch: true,
 		},
 		{
@@ -51,19 +51,19 @@ func TestMatcher(t *testing.T) {
 		{
 			name:      "Should match POST request with body",
 			input:     Request{Method: "POST", Path: "/order", Headers: map[string]string{"authorization": "Bearer ItsMe"}, Body: `{"cart": "555"}`},
-			want:      MatcherResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "12345"}},
+			want:      MatchResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "12345"}},
 			wantMatch: true,
 		},
 		{
 			name:      "Should match POST request if body and header contain request",
 			input:     Request{Method: "POST", Path: "/bears/contains", Headers: map[string]string{"content-type": "application/json"}, Body: `{"name": "Mr Bear", "honey": true}`},
-			want:      MatcherResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "12345"}},
+			want:      MatchResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "12345"}},
 			wantMatch: true,
 		},
 		{
 			name:      "Should match POST request if body and header match regex",
 			input:     Request{Method: "POST", Path: "/gopher/regex", Headers: map[string]string{"content-type": "application/json"}, Body: `{"name": "Mr Gopher", "honey": true}`},
-			want:      MatcherResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "999"}},
+			want:      MatchResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "999"}},
 			wantMatch: true,
 		},
 		{
@@ -74,7 +74,7 @@ func TestMatcher(t *testing.T) {
 		{
 			name:  "Should return 404 with the closest mapping when no match is found",
 			input: Request{Method: "GET", Path: "/bears/321"},
-			want: MatcherResult{
+			want: MatchResult{
 				Matched:    false,
 				StatusCode: 404,
 				Body: NotFoundResponse{
@@ -102,13 +102,16 @@ func TestMatcher(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			response := matcher.Match(tt.input)
-			if response.Matched != tt.wantMatch {
-				t.Logf("Matching conditions differ: got '%t', want '%t'", response.Matched, tt.wantMatch)
+			mapping, matched := matcher.Match(tt.input)
+
+			result := NewMatchResult(mapping, tt.input, matched)
+
+			if matched != tt.wantMatch {
+				t.Logf("Matching conditions differ: got '%t', want '%t'", matched, tt.wantMatch)
 			}
 
-			if tt.wantMatch && !assert.IsEqual(response, tt.want) {
-				t.Logf("%s doest not equal %s", response, tt.want)
+			if tt.wantMatch && !assert.IsEqual(result, tt.want) {
+				t.Logf("%s doest not equal %s", result, tt.want)
 				t.FailNow()
 			}
 		})

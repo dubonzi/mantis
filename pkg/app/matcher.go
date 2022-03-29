@@ -6,10 +6,6 @@ import (
 
 var _ Matcher = new(BasicMatcher)
 
-const (
-	NoMappingFoundMessage = "No mapping found for the request"
-)
-
 type Matcher interface {
 	Match(Request) (mapping *Mapping, matched bool)
 }

@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/americanas-go/config"
 	"github.com/go-playground/assert/v2"
@@ -11,6 +12,13 @@ import (
 var (
 	validLoaderMappings = Mappings{
 		"GET": []Mapping{
+			{
+				Request: RequestMapping{
+					Method: "GET",
+					Path:   PathMapping{Exact: "/delay/fixed"},
+				},
+				Response: ResponseMapping{StatusCode: 204, ResponseDelay: Delay{Fixed: FixedDelay{Duration: Duration(time.Millisecond * 250)}}},
+			},
 			{
 				Request: RequestMapping{
 					Method:  "GET",

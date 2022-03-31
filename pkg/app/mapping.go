@@ -69,10 +69,11 @@ func (m RequestMapping) HasBody() bool {
 }
 
 type ResponseMapping struct {
-	StatusCode int               `json:"statusCode"`
-	Headers    map[string]string `json:"headers"`
-	BodyFile   string            `json:"bodyFile"`
-	Body       string            `json:"body"`
+	StatusCode    int               `json:"statusCode"`
+	Headers       map[string]string `json:"headers"`
+	BodyFile      string            `json:"bodyFile"`
+	Body          string            `json:"body"`
+	ResponseDelay Delay             `json:"delay"`
 }
 
 type ValidationError struct {

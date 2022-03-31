@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "path": {
+      "exact": "/delay/fixed"
+    }
+  },
+  "response": {
+    "statusCode": 204,
+    "delay": {
+      "fixed": {
+        "duration": "250ms"
+      }
+    }
+  }
+}

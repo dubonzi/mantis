@@ -5,6 +5,7 @@ import (
 
 	"github.com/americanas-go/log"
 	"github.com/gofiber/fiber/v2"
+	"github.com/ohler55/ojg/oj"
 )
 
 type Request struct {
@@ -58,6 +59,6 @@ func (h Handler) All(c *fiber.Ctx) error {
 	case string:
 		return c.SendString(b)
 	default:
-		return c.JSON(b)
+		return c.SendString(oj.JSON(b))
 	}
 }

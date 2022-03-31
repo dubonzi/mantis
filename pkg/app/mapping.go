@@ -1,10 +1,10 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/americanas-go/log"
+	"github.com/ohler55/ojg/oj"
 )
 
 const (
@@ -77,14 +77,14 @@ type ResponseMapping struct {
 }
 
 type ValidationError struct {
-	Field, Message string
+	Field   string `json:"field"`
+	Message string `json:"message"`
 }
 
 type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
-	b, _ := json.Marshal(v)
-	return fmt.Sprintf("mapping definition is invalid: %s", string(b))
+	return fmt.Sprintf("mapping definition is invalid: %s", oj.JSON(v))
 }
 
 func (m Mapping) Validate() error {

@@ -8,6 +8,7 @@ require (
 	github.com/americanas-go/log v1.7.0
 	github.com/go-playground/assert/v2 v2.0.1
 	github.com/gofiber/fiber/v2 v2.29.0
+	github.com/ohler55/ojg v1.13.1
 	github.com/pkg/errors v0.9.1
 	go.uber.org/fx v1.17.0
 )

@@ -1,8 +1,9 @@
 package app
 
 import (
-	"encoding/json"
 	"net/http"
+
+	"github.com/ohler55/ojg/oj"
 )
 
 const (
@@ -48,8 +49,7 @@ func NewMatchResult(mapping *Mapping, r Request, matched bool) MatchResult {
 }
 
 func (m MatchResult) String() string {
-	s, _ := json.Marshal(m)
-	return string(s)
+	return oj.JSON(m)
 }
 
 type NotFoundResponse struct {
@@ -67,7 +67,9 @@ func (s *Service) MatchRequest(r Request) MatchResult {
 
 	result := NewMatchResult(mapping, r, matched)
 
-	s.delayer.Apply(&mapping.Response.ResponseDelay)
+	if mapping != nil {
+		s.delayer.Apply(&mapping.Response.ResponseDelay)
+	}
 
 	return result
 }

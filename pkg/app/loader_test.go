@@ -165,7 +165,7 @@ func TestLoadMappings(t *testing.T) {
 		{
 			name:         "Should throw error if mapping is invalid",
 			mappingsPath: "testdata/load/invalid",
-			wantErr:      `error adding mapping from file [ testdata/load/invalid/invalid_mapping.json ]: mapping definition is invalid: [{"Field":"Request.Method","Message":"Method is required"},{"Field":"Request.Path","Message":"Path mapping is required"}]`,
+			wantErr:      `error adding mapping from file [ testdata/load/invalid/invalid_mapping.json ]: mapping definition is invalid: [{"field":"Request.Method","message":"Method is required"},{"field":"Request.Path","message":"Path mapping is required"}]`,
 		},
 	}
 

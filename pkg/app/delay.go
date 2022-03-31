@@ -1,8 +1,9 @@
 package app
 
 import (
-	"encoding/json"
 	"time"
+
+	"github.com/ohler55/ojg/oj"
 )
 
 type Delayer interface {
@@ -37,7 +38,7 @@ type Duration time.Duration
 
 func (d *Duration) UnmarshalJSON(data []byte) error {
 	var s string
-	err := json.Unmarshal(data, &s)
+	err := oj.Unmarshal(data, &s)
 	if err != nil {
 		return err
 	}

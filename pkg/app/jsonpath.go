@@ -18,6 +18,10 @@ func NewJSONPathCache() *JSONPathCache {
 
 func (j *JSONPathCache) AddExpressions(expressions []string) error {
 	for _, expr := range expressions {
+		if _, ok := j.cache[expr]; ok {
+			continue
+		}
+
 		parsed, err := jp.ParseString(expr)
 		if err != nil {
 			return errors.Wrapf(err, "failed to parse jsonpath expression: %s ", expr)

@@ -36,6 +36,16 @@ var (
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"id": "regex","name": "Regex response"}`},
 			},
 		},
+		"PUT": []Mapping{
+			{
+				Request: RequestMapping{
+					Method: "PUT",
+					Path:   PathMapping{Exact: "/json/path"},
+					Body:   BodyMapping{JsonPath: []string{"$[?(@.product.id == '12345')]", "$.person[?(@.age > 21 || @.name == 'John')]"}},
+				},
+				Response: ResponseMapping{StatusCode: 204},
+			},
+		},
 		"POST": []Mapping{{
 			Request: RequestMapping{
 				Method:  "POST",
@@ -74,7 +84,7 @@ func TestGetMappings(t *testing.T) {
 		},
 	}
 
-	loader := NewFileLoader(NewRegexCache())
+	loader := NewFileLoader(NewRegexCache(), NewJSONPathCache())
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -125,7 +135,7 @@ func TestDecodeFile(t *testing.T) {
 		// TODO: Test to check on the other error path
 	}
 
-	loader := NewFileLoader(NewRegexCache())
+	loader := NewFileLoader(NewRegexCache(), NewJSONPathCache())
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -169,7 +179,7 @@ func TestLoadMappings(t *testing.T) {
 		},
 	}
 
-	loader := NewFileLoader(NewRegexCache())
+	loader := NewFileLoader(NewRegexCache(), NewJSONPathCache())
 
 	mappings := make(Mappings)
 

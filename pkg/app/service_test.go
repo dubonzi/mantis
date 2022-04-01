@@ -60,7 +60,7 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	matcher := NewMatcher(mappings, NewRegexCache())
+	matcher := NewMatcher(mappings, NewRegexCache(), NewJSONPathCache())
 
 	for _, tt := range tests {
 		delayer := mockDelayer{}

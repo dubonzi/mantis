@@ -11,14 +11,16 @@ type Matcher interface {
 }
 
 type BasicMatcher struct {
-	mappings   Mappings
-	regexCache *RegexCache
+	mappings      Mappings
+	regexCache    *RegexCache
+	jsonPathCache *JSONPathCache
 }
 
-func NewMatcher(m Mappings, r *RegexCache) *BasicMatcher {
+func NewMatcher(m Mappings, r *RegexCache, j *JSONPathCache) *BasicMatcher {
 	return &BasicMatcher{
-		mappings:   m,
-		regexCache: r,
+		mappings:      m,
+		regexCache:    r,
+		jsonPathCache: j,
 	}
 }
 
@@ -37,12 +39,12 @@ func (b *BasicMatcher) Match(r Request) (*Mapping, bool) {
 			score++
 		}
 
-		if b.matchHeaders(r, mapping) && mapping.Request.HasHeaders() {
-			score++
+		if b.matchHeaders(r, mapping) {
+			score += mapping.Request.HeaderScore()
 		}
 
-		if b.matchBody(r, mapping) && mapping.Request.HasBody() {
-			score++
+		if b.matchBody(r, mapping) {
+			score += mapping.Request.BodyScore()
 		}
 
 		if score == mapping.MaxScore() {
@@ -119,6 +121,10 @@ func (b *BasicMatcher) matchBody(r Request, m Mapping) bool {
 
 	if m.Request.Body.Pattern != "" {
 		return b.regexCache.Match(m.Request.Body.Pattern, r.Body)
+	}
+
+	if len(m.Request.Body.JsonPath) > 0 {
+		return b.jsonPathCache.Match(m.Request.Body.JsonPath, r.Body)
 	}
 
 	return true

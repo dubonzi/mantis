@@ -19,13 +19,8 @@ type Mapping struct {
 func (m Mapping) MaxScore() int {
 	score := StartingScore // Starts at 1 since Path is required
 
-	if m.Request.HasBody() {
-		score++
-	}
-
-	if m.Request.HasHeaders() {
-		score++
-	}
+	score += m.Request.HeaderScore()
+	score += m.Request.BodyScore()
 
 	return score
 }
@@ -37,10 +32,10 @@ type PathMapping struct {
 }
 
 type BodyMapping struct {
-	Exact    string `json:"exact,omitempty"`
-	Contains string `json:"contains,omitempty"`
-	Pattern  string `json:"pattern,omitempty"`
-	JsonPath string `json:"jsonPath,omitempty"`
+	Exact    string   `json:"exact,omitempty"`
+	Contains string   `json:"contains,omitempty"`
+	Pattern  string   `json:"pattern,omitempty"`
+	JsonPath []string `json:"jsonPath,omitempty"`
 }
 
 type HeaderMapping struct {
@@ -60,12 +55,15 @@ func (m RequestMapping) HasPath() bool {
 	return m.Path.Exact != "" || m.Path.Contains != "" || m.Path.Pattern != ""
 }
 
-func (m RequestMapping) HasHeaders() bool {
-	return len(m.Headers) > 0
+func (m RequestMapping) HeaderScore() int {
+	return len(m.Headers)
 }
 
-func (m RequestMapping) HasBody() bool {
-	return m.Body.Exact != "" || m.Body.Contains != "" || m.Body.Pattern != "" || m.Body.JsonPath != ""
+func (m RequestMapping) BodyScore() int {
+	if m.Body.Exact != "" || m.Body.Contains != "" || m.Body.Pattern != "" {
+		return 1
+	}
+	return len(m.Body.JsonPath)
 }
 
 type ResponseMapping struct {

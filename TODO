@@ -1,6 +1,7 @@
 README
+Add support for multiple contains and regex patterns in the same mapping
+Add support for combining multiple types of matching types ie. Path.Pattern + Path.Contains
 Add delay option to response (normal distribution)
-JsonPath Body Matching (https://github.com/ohler55/ojg)
 Add scenarios support
 Support for multiple mappings in one file
 Improve/refactor validation

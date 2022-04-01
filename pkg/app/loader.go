@@ -21,11 +21,12 @@ func FileNotFound(path string) error {
 }
 
 type FileLoader struct {
-	regexCache *RegexCache
+	regexCache    *RegexCache
+	jsonPathCache *JSONPathCache
 }
 
-func NewFileLoader(regexCache *RegexCache) *FileLoader {
-	return &FileLoader{regexCache}
+func NewFileLoader(regexCache *RegexCache, jsonPathCache *JSONPathCache) *FileLoader {
+	return &FileLoader{regexCache, jsonPathCache}
 }
 
 func (f *FileLoader) GetMappings() (Mappings, error) {
@@ -56,6 +57,11 @@ func (f *FileLoader) loadMappings(mappingsPath string, responsesPath string, map
 				}
 
 				err = f.regexCache.AddFromMapping(m)
+				if err != nil {
+					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
+				}
+
+				err = f.jsonPathCache.AddExpressions(m.Request.Body.JsonPath)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}

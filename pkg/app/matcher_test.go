@@ -44,11 +44,6 @@ func TestMatcher(t *testing.T) {
 			wantMatch: true,
 		},
 		{
-			name:      "Should not match GET request if path does not match regex",
-			input:     Request{Method: "GET", Path: "/regex/abc"},
-			wantMatch: false,
-		},
-		{
 			name:      "Should match POST request with body",
 			input:     Request{Method: "POST", Path: "/order", Headers: map[string]string{"authorization": "Bearer ItsMe"}, Body: `{"cart": "555"}`},
 			want:      MatchResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "12345"}},
@@ -61,10 +56,27 @@ func TestMatcher(t *testing.T) {
 			wantMatch: true,
 		},
 		{
+			name:      "Should match PUT request if body matches single JSON path",
+			input:     Request{Method: "PUT", Path: "/json/path", Body: `{"products": [{"id": "12345"}, {"id": "123452"}]}`},
+			want:      MatchResult{StatusCode: 204, Matched: true, Headers: map[string]string{"multiple": "false"}},
+			wantMatch: true,
+		},
+		{
+			name:      "Should match PUT request if body matches multiple JSON paths",
+			input:     Request{Method: "PUT", Path: "/json/path", Body: `{"products": [{"id": "12346"}], "users": [{"name": "Bob"}]}`},
+			want:      MatchResult{StatusCode: 204, Matched: true, Headers: map[string]string{"multiple": "true"}},
+			wantMatch: true,
+		},
+		{
 			name:      "Should match POST request if body and header match regex",
 			input:     Request{Method: "POST", Path: "/gopher/regex", Headers: map[string]string{"content-type": "application/json"}, Body: `{"name": "Mr Gopher", "honey": true}`},
 			want:      MatchResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "999"}},
 			wantMatch: true,
+		},
+		{
+			name:      "Should not match GET request if path does not match regex",
+			input:     Request{Method: "GET", Path: "/regex/abc"},
+			wantMatch: false,
 		},
 		{
 			name:      "Should not match a request when the method is not mapped",
@@ -93,12 +105,14 @@ func TestMatcher(t *testing.T) {
 
 	mappings := getMappings()
 	regexCache := NewRegexCache()
+	jsonPathCache := NewJSONPathCache()
 	for _, method := range mappings {
 		for _, mapping := range method {
 			_ = regexCache.AddFromMapping(mapping)
+			_ = jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
 		}
 	}
-	matcher := NewMatcher(mappings, regexCache)
+	matcher := NewMatcher(mappings, regexCache, jsonPathCache)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -177,6 +191,20 @@ func getMappings() Mappings {
 					Body:    BodyMapping{Pattern: `"name":\s*"[A-z\s]+"`},
 				},
 				Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "999"}},
+			},
+		},
+		"PUT": []Mapping{
+			{
+				Request:  RequestMapping{Method: "PUT", Path: PathMapping{Exact: "/json/path"}, Body: BodyMapping{JsonPath: []string{"$.products[?(@.id == '12345')]"}}},
+				Response: ResponseMapping{StatusCode: 204, Headers: map[string]string{"multiple": "false"}},
+			},
+			{
+				Request: RequestMapping{
+					Method: "PUT",
+					Path:   PathMapping{Exact: "/json/path"},
+					Body:   BodyMapping{JsonPath: []string{"$.products[?(@.id == '12346')]", "$.users[?(@.name == 'Bob')]"}},
+				},
+				Response: ResponseMapping{StatusCode: 204, Headers: map[string]string{"multiple": "true"}},
 			},
 		},
 		"DELETE": []Mapping{

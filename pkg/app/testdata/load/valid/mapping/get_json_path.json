@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "PUT",
+    "path": {
+      "exact": "/json/path"
+    },
+    "body": {
+      "jsonPath": [
+        "$[?(@.product.id == '12345')]",
+        "$.person[?(@.age > 21 || @.name == 'John')]"
+      ]
+    }
+  },
+  "response": {
+    "statusCode": 204
+  }
+}

@@ -6,6 +6,7 @@ import (
 	"github.com/americanas-go/config"
 	igfiber "github.com/americanas-go/ignite/gofiber/fiber.v2"
 	"github.com/americanas-go/ignite/gofiber/fiber.v2/plugins/contrib/americanas-go/health.v1"
+	"github.com/americanas-go/ignite/gofiber/fiber.v2/plugins/native/pprof"
 	"github.com/americanas-go/log"
 	"github.com/americanas-go/log/contrib/go.uber.org/zap.v1"
 	"github.com/dubonzi/mantis/pkg/app"
@@ -70,6 +71,7 @@ func healthModule() fx.Option {
 				ctx,
 				healthFiberOptions(),
 				health.Register,
+				pprof.Register,
 			)
 
 			lc.Append(

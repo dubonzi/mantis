@@ -97,14 +97,14 @@ func (b *BasicMatcher) matchHeaders(r Request, m Mapping) bool {
 			}
 		}
 
-		if mVal.Contains != "" {
-			if !strings.Contains(rVal, mVal.Contains) {
+		for _, c := range mVal.Contains {
+			if !strings.Contains(rVal, c) {
 				return false
 			}
 		}
 
-		if mVal.Pattern != "" {
-			if !b.regexCache.Match(mVal.Pattern, rVal) {
+		for _, p := range mVal.Pattern {
+			if !b.regexCache.Match(p, rVal) {
 				return false
 			}
 		}

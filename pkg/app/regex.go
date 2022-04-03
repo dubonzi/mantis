@@ -33,8 +33,8 @@ func (r *RegexCache) AddFromMapping(mapping Mapping) error {
 	}
 
 	for _, value := range mapping.Request.Headers {
-		if value.Pattern != "" {
-			err = r.compileAndPut(value.Pattern)
+		for _, p := range value.Pattern {
+			err = r.compileAndPut(p)
 			if err != nil {
 				return errors.Wrapf(err, "failed to compile header regex with pattern: %s ", value.Pattern)
 			}

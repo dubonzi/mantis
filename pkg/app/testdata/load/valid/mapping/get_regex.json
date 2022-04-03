@@ -9,7 +9,10 @@
     },
     "headers": {
       "accept": {
-        "pattern": "application/(json|xml){1}"
+        "pattern": [
+          "application/(json|xml){1}",
+          ".*json.*"
+        ]
       }
     }
   },

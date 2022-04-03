@@ -30,9 +30,9 @@ type BodyMapping struct {
 }
 
 type HeaderMapping struct {
-	Exact    string `json:"exact,omitempty"`
-	Contains string `json:"contains,omitempty"`
-	Pattern  string `json:"pattern,omitempty"`
+	Exact    string   `json:"exact,omitempty"`
+	Contains []string `json:"contains,omitempty"`
+	Pattern  []string `json:"pattern,omitempty"`
 }
 
 type RequestMapping struct {
@@ -47,7 +47,16 @@ func (m RequestMapping) HasPath() bool {
 }
 
 func (m RequestMapping) HeaderScore() int {
-	return len(m.Headers)
+	var score int
+	for _, h := range m.Headers {
+		if h.Exact != "" {
+			score++
+			continue
+		}
+
+		score += len(h.Contains) + len(h.Pattern)
+	}
+	return score
 }
 
 func (m RequestMapping) PathScore() int {

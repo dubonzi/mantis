@@ -177,7 +177,7 @@ func getMappings() Mappings {
 			{
 				Request: RequestMapping{
 					Method:  "POST",
-					Headers: map[string]HeaderMapping{"content-type": {Contains: "json"}},
+					Headers: map[string]HeaderMapping{"content-type": {Contains: []string{"json"}}},
 					Path:    PathMapping{Contains: []string{"bears", "contains"}},
 					Body:    BodyMapping{Contains: []string{"name", `"honey": true`}},
 				},
@@ -186,7 +186,7 @@ func getMappings() Mappings {
 			{
 				Request: RequestMapping{
 					Method:  "POST",
-					Headers: map[string]HeaderMapping{"content-type": {Pattern: "^application/(json|xml){1}$"}},
+					Headers: map[string]HeaderMapping{"content-type": {Pattern: []string{"^application/(json|xml){1}$"}}},
 					Path:    PathMapping{Exact: "/gopher/regex"},
 					Body:    BodyMapping{Pattern: []string{`"name":\s*"[A-z\s]+"`}},
 				},

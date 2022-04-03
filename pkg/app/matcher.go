@@ -47,7 +47,7 @@ func (b *BasicMatcher) Match(r Request) (*Mapping, bool) {
 			score += mapping.Request.BodyScore()
 		}
 
-		if score == mapping.MaxScore() {
+		if score == mapping.MaxScore {
 			return mapping, true
 		}
 

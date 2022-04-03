@@ -20,24 +20,29 @@ func FileNotFound(path string) error {
 	return errors.Errorf("file '%s' not found", path)
 }
 
-type FileLoader struct {
+type Loader struct {
 	regexCache    *RegexCache
 	jsonPathCache *JSONPathCache
 }
 
-func NewFileLoader(regexCache *RegexCache, jsonPathCache *JSONPathCache) *FileLoader {
-	return &FileLoader{regexCache, jsonPathCache}
+func NewLoader(regexCache *RegexCache, jsonPathCache *JSONPathCache) *Loader {
+	return &Loader{regexCache, jsonPathCache}
 }
 
-func (f *FileLoader) GetMappings() (Mappings, error) {
+func (f *Loader) GetMappings() (Mappings, error) {
 	mappingsPath := config.String("loader.path.mapping")
 	responsesPath := config.String("loader.path.response")
 
 	mappings := make(Mappings)
-	return mappings, f.loadMappings(mappingsPath, responsesPath, mappings)
+	err := f.loadMappings(mappingsPath, responsesPath, mappings)
+	if err != nil {
+		return mappings, err
+	}
+
+	return mappings, nil
 }
 
-func (f *FileLoader) loadMappings(mappingsPath string, responsesPath string, mappings Mappings) error {
+func (f *Loader) loadMappings(mappingsPath string, responsesPath string, mappings Mappings) error {
 	err := filepath.WalkDir(
 		mappingsPath,
 		func(path string, d fs.DirEntry, err error) error {
@@ -66,7 +71,7 @@ func (f *FileLoader) loadMappings(mappingsPath string, responsesPath string, map
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}
 
-				err = mappings.Put(m)
+				err = mappings.Put(&m)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}
@@ -83,7 +88,7 @@ func (f *FileLoader) loadMappings(mappingsPath string, responsesPath string, map
 	return nil
 }
 
-func (*FileLoader) decodeFile(path string) (Mapping, error) {
+func (*Loader) decodeFile(path string) (Mapping, error) {
 	content, err := loadFile(path)
 	if err != nil {
 		return Mapping{}, err

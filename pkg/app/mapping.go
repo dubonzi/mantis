@@ -7,13 +7,76 @@ import (
 	"github.com/ohler55/ojg/oj"
 )
 
+const (
+	ContainsCost = 2
+	JsonPathCost = 4
+	RegexCost    = 5
+)
+
 type Mapping struct {
 	Request  RequestMapping  `json:"request"`
 	Response ResponseMapping `json:"response"`
+
+	MaxScore int
+	Cost     int
 }
 
-func (m Mapping) MaxScore() int {
-	return m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
+func (m *Mapping) CalcCost() {
+	var cost int
+
+	cost += m.Request.Path.Cost() + m.Request.Body.Cost()
+
+	for _, v := range m.Request.Headers {
+		cost += v.Cost()
+	}
+
+	m.Cost = cost
+}
+
+func (m *Mapping) CalcMaxScore() {
+	m.MaxScore = m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
+}
+
+func (m *Mapping) Validate() error {
+	errs := make(ValidationErrors, 0)
+	if m.Request.Method == "" {
+		errs = append(errs, ValidationError{"Request.Method", "Method is required"})
+	}
+	if !m.Request.HasPath() {
+		errs = append(errs, ValidationError{"Request.Path", "Path mapping is required"})
+	}
+
+	if len(errs) > 0 {
+		return errs
+	}
+
+	return nil
+}
+
+type Mappings map[string][]*Mapping
+
+func (m Mappings) Put(mapping *Mapping) error {
+	if err := mapping.Validate(); err != nil {
+		return err
+	}
+
+	log.Tracef("adding mapping: %+v", mapping)
+
+	mapping.CalcMaxScore()
+	mapping.CalcCost()
+
+	m[mapping.Request.Method] = append(m[mapping.Request.Method], mapping)
+	return nil
+}
+
+func (m Mappings) PutAll(mappings []*Mapping) error {
+	for _, mapping := range mappings {
+		err := m.Put(mapping)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 type CommonMatch struct {
@@ -22,9 +85,17 @@ type CommonMatch struct {
 	Patterns []string `json:"pattern,omitempty"`
 }
 
+func (c CommonMatch) Cost() int {
+	return (len(c.Contains) * ContainsCost) + (len(c.Patterns) * RegexCost)
+}
+
 type BodyMatch struct {
 	CommonMatch
 	JsonPath []string `json:"jsonPath,omitempty"`
+}
+
+func (b BodyMatch) Cost() int {
+	return (len(b.Contains) * ContainsCost) + (len(b.Patterns) * RegexCost) + (len(b.JsonPath) * JsonPathCost)
 }
 
 type RequestMapping struct {
@@ -82,32 +153,4 @@ type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
 	return fmt.Sprintf("mapping definition is invalid: %s", oj.JSON(v))
-}
-
-func (m Mapping) Validate() error {
-	errs := make(ValidationErrors, 0)
-	if m.Request.Method == "" {
-		errs = append(errs, ValidationError{"Request.Method", "Method is required"})
-	}
-	if !m.Request.HasPath() {
-		errs = append(errs, ValidationError{"Request.Path", "Path mapping is required"})
-	}
-
-	if len(errs) > 0 {
-		return errs
-	}
-
-	return nil
-}
-
-type Mappings map[string][]*Mapping
-
-func (m Mappings) Put(mapping Mapping) error {
-	if err := mapping.Validate(); err != nil {
-		return err
-	}
-
-	log.Tracef("adding mapping: %+v", mapping)
-	m[mapping.Request.Method] = append(m[mapping.Request.Method], &mapping)
-	return nil
 }

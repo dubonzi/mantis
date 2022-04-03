@@ -36,7 +36,7 @@ func (b *BasicMatcher) Match(r Request) (*Mapping, bool) {
 		var score int
 
 		if b.matchPath(r, mapping) {
-			score++
+			score += mapping.Request.PathScore()
 		}
 
 		if b.matchHeaders(r, mapping) {
@@ -69,19 +69,15 @@ func (b *BasicMatcher) matchPath(r Request, m Mapping) bool {
 		return r.Path == m.Request.Path.Exact
 	}
 
-	if len(m.Request.Path.Contains) > 0 {
-		for _, c := range m.Request.Path.Contains {
-			if !strings.Contains(r.Path, c) {
-				return false
-			}
+	for _, c := range m.Request.Path.Contains {
+		if !strings.Contains(r.Path, c) {
+			return false
 		}
 	}
 
-	if len(m.Request.Path.Pattern) > 0 {
-		for _, p := range m.Request.Path.Pattern {
-			if !b.regexCache.Match(p, r.Path) {
-				return false
-			}
+	for _, p := range m.Request.Path.Pattern {
+		if !b.regexCache.Match(p, r.Path) {
+			return false
 		}
 	}
 
@@ -123,12 +119,16 @@ func (b *BasicMatcher) matchBody(r Request, m Mapping) bool {
 		return r.Body == m.Request.Body.Exact
 	}
 
-	if m.Request.Body.Contains != "" {
-		return strings.Contains(r.Body, m.Request.Body.Contains)
+	for _, c := range m.Request.Body.Contains {
+		if !strings.Contains(r.Body, c) {
+			return false
+		}
 	}
 
-	if m.Request.Body.Pattern != "" {
-		return b.regexCache.Match(m.Request.Body.Pattern, r.Body)
+	for _, p := range m.Request.Body.Pattern {
+		if !b.regexCache.Match(p, r.Body) {
+			return false
+		}
 	}
 
 	if len(m.Request.Body.JsonPath) > 0 {

@@ -21,14 +21,14 @@ func (r *RegexCache) AddFromMapping(mapping Mapping) error {
 	for _, p := range mapping.Request.Path.Pattern {
 		err = r.compileAndPut(p)
 		if err != nil {
-			return errors.Wrapf(err, "failed to compile path regex with pattern:  %s ", mapping.Request.Path.Pattern)
+			return errors.Wrapf(err, "failed to compile path regex with pattern:  %s ", p)
 		}
 	}
 
-	if mapping.Request.Body.Pattern != "" {
-		err = r.compileAndPut(mapping.Request.Body.Pattern)
+	for _, p := range mapping.Request.Body.Pattern {
+		err = r.compileAndPut(p)
 		if err != nil {
-			return errors.Wrapf(err, "failed to compile body regex with pattern:  %s ", mapping.Request.Body.Pattern)
+			return errors.Wrapf(err, "failed to compile body regex with pattern:  %s ", p)
 		}
 	}
 

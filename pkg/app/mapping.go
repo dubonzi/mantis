@@ -7,22 +7,13 @@ import (
 	"github.com/ohler55/ojg/oj"
 )
 
-const (
-	StartingScore = 1
-)
-
 type Mapping struct {
 	Request  RequestMapping  `json:"request"`
 	Response ResponseMapping `json:"response"`
 }
 
 func (m Mapping) MaxScore() int {
-	score := StartingScore // Starts at 1 since Path is required
-
-	score += m.Request.HeaderScore()
-	score += m.Request.BodyScore()
-
-	return score
+	return m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
 }
 
 type PathMapping struct {
@@ -33,8 +24,8 @@ type PathMapping struct {
 
 type BodyMapping struct {
 	Exact    string   `json:"exact,omitempty"`
-	Contains string   `json:"contains,omitempty"`
-	Pattern  string   `json:"pattern,omitempty"`
+	Contains []string `json:"contains,omitempty"`
+	Pattern  []string `json:"pattern,omitempty"`
 	JsonPath []string `json:"jsonPath,omitempty"`
 }
 
@@ -59,11 +50,18 @@ func (m RequestMapping) HeaderScore() int {
 	return len(m.Headers)
 }
 
-func (m RequestMapping) BodyScore() int {
-	if m.Body.Exact != "" || m.Body.Contains != "" || m.Body.Pattern != "" {
+func (m RequestMapping) PathScore() int {
+	if m.Path.Exact != "" {
 		return 1
 	}
-	return len(m.Body.JsonPath)
+	return len(m.Path.Contains) + len(m.Path.Pattern)
+}
+
+func (m RequestMapping) BodyScore() int {
+	if m.Body.Exact != "" {
+		return 1
+	}
+	return len(m.Body.JsonPath) + len(m.Body.Contains) + len(m.Body.Pattern)
 }
 
 type ResponseMapping struct {

@@ -5,7 +5,10 @@
       "exact": "/order"
     },
     "body": {
-      "exact": "{\"orderId\": \"999\"}"
+      "contains": [
+        "orderId",
+        "999"
+      ]
     },
     "headers": {
       "content-type": {

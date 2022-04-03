@@ -51,7 +51,7 @@ var (
 				Method:  "POST",
 				Path:    PathMapping{Exact: "/order"},
 				Headers: map[string]HeaderMapping{"content-type": {Exact: "application/json"}},
-				Body:    BodyMapping{Exact: `{"orderId": "999"}`},
+				Body:    BodyMapping{Contains: []string{"orderId", "999"}},
 			},
 			Response: ResponseMapping{StatusCode: 200},
 		}},

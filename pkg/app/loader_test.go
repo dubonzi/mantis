@@ -15,23 +15,23 @@ var (
 			{
 				Request: RequestMapping{
 					Method: "GET",
-					Path:   PathMapping{Exact: "/delay/fixed"},
+					Path:   CommonMatch{Exact: "/delay/fixed"},
 				},
 				Response: ResponseMapping{StatusCode: 204, ResponseDelay: Delay{Fixed: FixedDelay{Duration: Duration(time.Millisecond * 250)}}},
 			},
 			{
 				Request: RequestMapping{
 					Method:  "GET",
-					Path:    PathMapping{Exact: "/product/12345"},
-					Headers: map[string]HeaderMapping{"accept": {Exact: "application/json"}},
+					Path:    CommonMatch{Exact: "/product/12345"},
+					Headers: map[string]CommonMatch{"accept": {Exact: "application/json"}},
 				},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"id": "12345","name": "My Product","description": "This is it"}`, BodyFile: "get_product_12345_response.json"},
 			},
 			{
 				Request: RequestMapping{
 					Method:  "GET",
-					Path:    PathMapping{Pattern: []string{"/regex/[A-z0-9]+", "/regex/.{1}"}},
-					Headers: map[string]HeaderMapping{"accept": {Pattern: []string{"application/(json|xml){1}", ".*json.*"}}},
+					Path:    CommonMatch{Patterns: []string{"/regex/[A-z0-9]+", "/regex/.{1}"}},
+					Headers: map[string]CommonMatch{"accept": {Patterns: []string{"application/(json|xml){1}", ".*json.*"}}},
 				},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"id": "regex","name": "Regex response"}`},
 			},
@@ -40,8 +40,8 @@ var (
 			{
 				Request: RequestMapping{
 					Method: "PUT",
-					Path:   PathMapping{Exact: "/json/path"},
-					Body:   BodyMapping{JsonPath: []string{"$[?(@.product.id == '12345')]", "$.person[?(@.age > 21 || @.name == 'John')]"}},
+					Path:   CommonMatch{Exact: "/json/path"},
+					Body:   BodyMatch{JsonPath: []string{"$[?(@.product.id == '12345')]", "$.person[?(@.age > 21 || @.name == 'John')]"}},
 				},
 				Response: ResponseMapping{StatusCode: 204},
 			},
@@ -49,9 +49,9 @@ var (
 		"POST": []Mapping{{
 			Request: RequestMapping{
 				Method:  "POST",
-				Path:    PathMapping{Exact: "/order"},
-				Headers: map[string]HeaderMapping{"content-type": {Exact: "application/json"}},
-				Body:    BodyMapping{Contains: []string{"orderId", "999"}},
+				Path:    CommonMatch{Exact: "/order"},
+				Headers: map[string]CommonMatch{"content-type": {Exact: "application/json"}},
+				Body:    BodyMatch{CommonMatch: CommonMatch{Contains: []string{"orderId", "999"}}},
 			},
 			Response: ResponseMapping{StatusCode: 200},
 		}},
@@ -116,8 +116,8 @@ func TestDecodeFile(t *testing.T) {
 			wantMapping: Mapping{
 				Request: RequestMapping{
 					Method:  "GET",
-					Path:    PathMapping{Exact: "/product/12345"},
-					Headers: map[string]HeaderMapping{"accept": {Exact: "application/json"}},
+					Path:    CommonMatch{Exact: "/product/12345"},
+					Headers: map[string]CommonMatch{"accept": {Exact: "application/json"}},
 				},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, BodyFile: "get_product_12345_response.json"},
 			},

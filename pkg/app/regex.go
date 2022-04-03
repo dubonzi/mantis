@@ -18,14 +18,14 @@ func NewRegexCache() *RegexCache {
 
 func (r *RegexCache) AddFromMapping(mapping Mapping) error {
 	var err error
-	for _, p := range mapping.Request.Path.Pattern {
+	for _, p := range mapping.Request.Path.Patterns {
 		err = r.compileAndPut(p)
 		if err != nil {
 			return errors.Wrapf(err, "failed to compile path regex with pattern:  %s ", p)
 		}
 	}
 
-	for _, p := range mapping.Request.Body.Pattern {
+	for _, p := range mapping.Request.Body.Patterns {
 		err = r.compileAndPut(p)
 		if err != nil {
 			return errors.Wrapf(err, "failed to compile body regex with pattern:  %s ", p)
@@ -33,10 +33,10 @@ func (r *RegexCache) AddFromMapping(mapping Mapping) error {
 	}
 
 	for _, value := range mapping.Request.Headers {
-		for _, p := range value.Pattern {
+		for _, p := range value.Patterns {
 			err = r.compileAndPut(p)
 			if err != nil {
-				return errors.Wrapf(err, "failed to compile header regex with pattern: %s ", value.Pattern)
+				return errors.Wrapf(err, "failed to compile header regex with pattern: %s ", value.Patterns)
 			}
 		}
 	}

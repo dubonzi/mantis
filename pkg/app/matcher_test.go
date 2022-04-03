@@ -94,8 +94,8 @@ func TestMatcher(t *testing.T) {
 					Request: Request{Method: "GET", Path: "/bears/321"},
 					ClosestMapping: &RequestMapping{
 						Method:  "GET",
-						Path:    PathMapping{Exact: "/bears/321"},
-						Headers: map[string]HeaderMapping{"authorization": {Exact: "Bearer Bear 🐻"}},
+						Path:    CommonMatch{Exact: "/bears/321"},
+						Headers: map[string]CommonMatch{"authorization": {Exact: "Bearer Bear 🐻"}},
 					},
 				},
 			},
@@ -138,25 +138,25 @@ func getMappings() Mappings {
 			{
 				Request: RequestMapping{
 					Method:  "GET",
-					Path:    PathMapping{Exact: "/bears/321"},
-					Headers: map[string]HeaderMapping{"authorization": {Exact: "Bearer Bear 🐻"}},
+					Path:    CommonMatch{Exact: "/bears/321"},
+					Headers: map[string]CommonMatch{"authorization": {Exact: "Bearer Bear 🐻"}},
 				},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "🐻"},
 			},
 			{
-				Request:  RequestMapping{Method: "GET", Path: PathMapping{Exact: "/match/me/123?file=true"}},
+				Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/match/me/123?file=true"}},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"message": "Hello from the body file"}`},
 			},
 			{
-				Request:  RequestMapping{Method: "GET", Path: PathMapping{Exact: "/simple"}},
+				Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/simple"}},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "I'm a simple response"},
 			},
 			{
-				Request:  RequestMapping{Method: "GET", Path: PathMapping{Contains: []string{"contains/123"}}},
+				Request:  RequestMapping{Method: "GET", Path: CommonMatch{Contains: []string{"contains/123"}}},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping contains path"},
 			},
 			{
-				Request:  RequestMapping{Method: "GET", Path: PathMapping{Pattern: []string{"regex/[0-9]+$", `regex/\d{1}`}}},
+				Request:  RequestMapping{Method: "GET", Path: CommonMatch{Patterns: []string{"regex/[0-9]+$", `regex/\d{1}`}}},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping with regex on path"},
 			},
 		},
@@ -164,52 +164,52 @@ func getMappings() Mappings {
 			{
 				Request: RequestMapping{
 					Method:  "POST",
-					Path:    PathMapping{Exact: "/order"},
-					Headers: map[string]HeaderMapping{"Authorization": {Exact: "Bearer ItsMe"}},
-					Body:    BodyMapping{Exact: `{"cart": "555"}`},
+					Path:    CommonMatch{Exact: "/order"},
+					Headers: map[string]CommonMatch{"Authorization": {Exact: "Bearer ItsMe"}},
+					Body:    BodyMatch{CommonMatch: CommonMatch{Exact: `{"cart": "555"}`}},
 				},
 				Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "12345"}},
 			},
 			{
-				Request:  RequestMapping{Method: "POST", Path: PathMapping{Exact: "/order"}, Body: BodyMapping{Exact: `{"cart": "555"}`}},
+				Request:  RequestMapping{Method: "POST", Path: CommonMatch{Exact: "/order"}, Body: BodyMatch{CommonMatch: CommonMatch{Exact: `{"cart": "555"}`}}},
 				Response: ResponseMapping{StatusCode: 401},
 			},
 			{
 				Request: RequestMapping{
 					Method:  "POST",
-					Headers: map[string]HeaderMapping{"content-type": {Contains: []string{"json"}}},
-					Path:    PathMapping{Contains: []string{"bears", "contains"}},
-					Body:    BodyMapping{Contains: []string{"name", `"honey": true`}},
+					Headers: map[string]CommonMatch{"content-type": {Contains: []string{"json"}}},
+					Path:    CommonMatch{Contains: []string{"bears", "contains"}},
+					Body:    BodyMatch{CommonMatch: CommonMatch{Contains: []string{"name", `"honey": true`}}},
 				},
 				Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "12345"}},
 			},
 			{
 				Request: RequestMapping{
 					Method:  "POST",
-					Headers: map[string]HeaderMapping{"content-type": {Pattern: []string{"^application/(json|xml){1}$"}}},
-					Path:    PathMapping{Exact: "/gopher/regex"},
-					Body:    BodyMapping{Pattern: []string{`"name":\s*"[A-z\s]+"`}},
+					Headers: map[string]CommonMatch{"content-type": {Patterns: []string{"^application/(json|xml){1}$"}}},
+					Path:    CommonMatch{Exact: "/gopher/regex"},
+					Body:    BodyMatch{CommonMatch: CommonMatch{Patterns: []string{`"name":\s*"[A-z\s]+"`}}},
 				},
 				Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "999"}},
 			},
 		},
 		"PUT": []Mapping{
 			{
-				Request:  RequestMapping{Method: "PUT", Path: PathMapping{Exact: "/json/path"}, Body: BodyMapping{JsonPath: []string{"$.products[?(@.id == '12345')]"}}},
+				Request:  RequestMapping{Method: "PUT", Path: CommonMatch{Exact: "/json/path"}, Body: BodyMatch{JsonPath: []string{"$.products[?(@.id == '12345')]"}}},
 				Response: ResponseMapping{StatusCode: 204, Headers: map[string]string{"multiple": "false"}},
 			},
 			{
 				Request: RequestMapping{
 					Method: "PUT",
-					Path:   PathMapping{Exact: "/json/path"},
-					Body:   BodyMapping{JsonPath: []string{"$.products[?(@.id == '12346')]", "$.users[?(@.name == 'Bob')]"}},
+					Path:   CommonMatch{Exact: "/json/path"},
+					Body:   BodyMatch{JsonPath: []string{"$.products[?(@.id == '12346')]", "$.users[?(@.name == 'Bob')]"}},
 				},
 				Response: ResponseMapping{StatusCode: 204, Headers: map[string]string{"multiple": "true"}},
 			},
 		},
 		"DELETE": []Mapping{
 			{
-				Request:  RequestMapping{Method: "DELETE", Path: PathMapping{Exact: "/cart/123"}},
+				Request:  RequestMapping{Method: "DELETE", Path: CommonMatch{Exact: "/cart/123"}},
 				Response: ResponseMapping{StatusCode: 204},
 			},
 		},

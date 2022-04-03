@@ -15,7 +15,7 @@ func TestRegexCache(t *testing.T) {
 		{
 			mapping: Mapping{
 				Request: RequestMapping{
-					Path: PathMapping{Pattern: []string{`/[A-z0-9]+/`}},
+					Path: CommonMatch{Patterns: []string{`/[A-z0-9]+/`}},
 				},
 			},
 			wantLen: 1,
@@ -24,9 +24,9 @@ func TestRegexCache(t *testing.T) {
 		{
 			mapping: Mapping{
 				Request: RequestMapping{
-					Path:    PathMapping{Pattern: []string{`[A-z0-9]+`}},
-					Headers: map[string]HeaderMapping{"accept": {Pattern: []string{".*"}}, "x-id": {Pattern: []string{`\d*`}}, "x-debug": {Pattern: []string{".*"}}},
-					Body:    BodyMapping{Pattern: []string{`\d{3}\.\d{3}\.\d{3}-\d{2}`}},
+					Path:    CommonMatch{Patterns: []string{`[A-z0-9]+`}},
+					Headers: map[string]CommonMatch{"accept": {Patterns: []string{".*"}}, "x-id": {Patterns: []string{`\d*`}}, "x-debug": {Patterns: []string{".*"}}},
+					Body:    BodyMatch{CommonMatch: CommonMatch{Patterns: []string{`\d{3}\.\d{3}\.\d{3}-\d{2}`}}},
 				},
 			},
 			wantLen: 4,
@@ -35,7 +35,7 @@ func TestRegexCache(t *testing.T) {
 		{
 			mapping: Mapping{
 				Request: RequestMapping{
-					Path: PathMapping{Pattern: []string{`([A-z0-9]+`}},
+					Path: CommonMatch{Patterns: []string{`([A-z0-9]+`}},
 				},
 			},
 			wantLen: 0,
@@ -44,7 +44,7 @@ func TestRegexCache(t *testing.T) {
 		{
 			mapping: Mapping{
 				Request: RequestMapping{
-					Headers: map[string]HeaderMapping{"accept": {Pattern: []string{"((.*json)"}}},
+					Headers: map[string]CommonMatch{"accept": {Patterns: []string{"((.*json)"}}},
 				},
 			},
 			wantLen: 0,
@@ -53,7 +53,7 @@ func TestRegexCache(t *testing.T) {
 		{
 			mapping: Mapping{
 				Request: RequestMapping{
-					Body: BodyMapping{Pattern: []string{`\d{)}*`}},
+					Body: BodyMatch{CommonMatch: CommonMatch{Patterns: []string{`\d{)}*`}}},
 				},
 			},
 			wantLen: 0,
@@ -73,16 +73,16 @@ func TestRegexCache(t *testing.T) {
 
 		if !tt.wantErr {
 
-			for _, p := range tt.mapping.Request.Path.Pattern {
+			for _, p := range tt.mapping.Request.Path.Patterns {
 				_, ok := rc.cache[p]
 				assert.Equal(t, true, ok)
 			}
-			for _, p := range tt.mapping.Request.Body.Pattern {
+			for _, p := range tt.mapping.Request.Body.Patterns {
 				_, ok := rc.cache[p]
 				assert.Equal(t, true, ok)
 			}
 			for _, v := range tt.mapping.Request.Headers {
-				for _, p := range v.Pattern {
+				for _, p := range v.Patterns {
 					_, ok := rc.cache[p]
 					assert.Equal(t, true, ok)
 				}

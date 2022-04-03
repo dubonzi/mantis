@@ -16,34 +16,26 @@ func (m Mapping) MaxScore() int {
 	return m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
 }
 
-type PathMapping struct {
+type CommonMatch struct {
 	Exact    string   `json:"exact,omitempty"`
 	Contains []string `json:"contains,omitempty"`
-	Pattern  []string `json:"pattern,omitempty"`
+	Patterns []string `json:"pattern,omitempty"`
 }
 
-type BodyMapping struct {
-	Exact    string   `json:"exact,omitempty"`
-	Contains []string `json:"contains,omitempty"`
-	Pattern  []string `json:"pattern,omitempty"`
+type BodyMatch struct {
+	CommonMatch
 	JsonPath []string `json:"jsonPath,omitempty"`
 }
 
-type HeaderMapping struct {
-	Exact    string   `json:"exact,omitempty"`
-	Contains []string `json:"contains,omitempty"`
-	Pattern  []string `json:"pattern,omitempty"`
-}
-
 type RequestMapping struct {
-	Method  string                   `json:"method"`
-	Path    PathMapping              `json:"path"`
-	Headers map[string]HeaderMapping `json:"headers"`
-	Body    BodyMapping              `json:"body"`
+	Method  string                 `json:"method"`
+	Path    CommonMatch            `json:"path"`
+	Headers map[string]CommonMatch `json:"headers,omitempty"`
+	Body    BodyMatch              `json:"body,omitempty"`
 }
 
 func (m RequestMapping) HasPath() bool {
-	return m.Path.Exact != "" || len(m.Path.Contains) > 0 || len(m.Path.Pattern) > 0
+	return m.Path.Exact != "" || len(m.Path.Contains) > 0 || len(m.Path.Patterns) > 0
 }
 
 func (m RequestMapping) HeaderScore() int {
@@ -54,7 +46,7 @@ func (m RequestMapping) HeaderScore() int {
 			continue
 		}
 
-		score += len(h.Contains) + len(h.Pattern)
+		score += len(h.Contains) + len(h.Patterns)
 	}
 	return score
 }
@@ -63,22 +55,22 @@ func (m RequestMapping) PathScore() int {
 	if m.Path.Exact != "" {
 		return 1
 	}
-	return len(m.Path.Contains) + len(m.Path.Pattern)
+	return len(m.Path.Contains) + len(m.Path.Patterns)
 }
 
 func (m RequestMapping) BodyScore() int {
 	if m.Body.Exact != "" {
 		return 1
 	}
-	return len(m.Body.JsonPath) + len(m.Body.Contains) + len(m.Body.Pattern)
+	return len(m.Body.JsonPath) + len(m.Body.Contains) + len(m.Body.Patterns)
 }
 
 type ResponseMapping struct {
 	StatusCode    int               `json:"statusCode"`
-	Headers       map[string]string `json:"headers"`
-	BodyFile      string            `json:"bodyFile"`
-	Body          string            `json:"body"`
-	ResponseDelay Delay             `json:"delay"`
+	Headers       map[string]string `json:"headers,omitempty"`
+	BodyFile      string            `json:"bodyFile,omitempty"`
+	Body          string            `json:"body,omitempty"`
+	ResponseDelay Delay             `json:"delay,omitempty"`
 }
 
 type ValidationError struct {

@@ -30,11 +30,11 @@ func TestService(t *testing.T) {
 	mappings := Mappings{
 		"GET": []Mapping{
 			{
-				Request:  RequestMapping{Method: "GET", Path: PathMapping{Exact: "/fixed/delay"}},
+				Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/fixed/delay"}},
 				Response: ResponseMapping{StatusCode: 204, ResponseDelay: Delay{FixedDelay{Duration: Duration(time.Millisecond * 10000)}}},
 			},
 			{
-				Request:  RequestMapping{Method: "GET", Path: PathMapping{Exact: "/no/delay"}},
+				Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/no/delay"}},
 				Response: ResponseMapping{StatusCode: 204},
 			},
 		},

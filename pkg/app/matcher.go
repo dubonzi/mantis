@@ -75,7 +75,7 @@ func (b *BasicMatcher) matchPath(r Request, m Mapping) bool {
 		}
 	}
 
-	for _, p := range m.Request.Path.Pattern {
+	for _, p := range m.Request.Path.Patterns {
 		if !b.regexCache.Match(p, r.Path) {
 			return false
 		}
@@ -103,7 +103,7 @@ func (b *BasicMatcher) matchHeaders(r Request, m Mapping) bool {
 			}
 		}
 
-		for _, p := range mVal.Pattern {
+		for _, p := range mVal.Patterns {
 			if !b.regexCache.Match(p, rVal) {
 				return false
 			}
@@ -125,7 +125,7 @@ func (b *BasicMatcher) matchBody(r Request, m Mapping) bool {
 		}
 	}
 
-	for _, p := range m.Request.Body.Pattern {
+	for _, p := range m.Request.Body.Patterns {
 		if !b.regexCache.Match(p, r.Body) {
 			return false
 		}

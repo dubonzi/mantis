@@ -67,7 +67,7 @@ func (s *Service) MatchRequest(r Request) MatchResult {
 
 	result := NewMatchResult(mapping, r, matched)
 
-	if mapping != nil {
+	if matched {
 		s.delayer.Apply(&mapping.Response.ResponseDelay)
 	}
 

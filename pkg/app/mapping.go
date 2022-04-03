@@ -26,9 +26,9 @@ func (m Mapping) MaxScore() int {
 }
 
 type PathMapping struct {
-	Exact    string `json:"exact,omitempty"`
-	Contains string `json:"contains,omitempty"`
-	Pattern  string `json:"pattern,omitempty"`
+	Exact    string   `json:"exact,omitempty"`
+	Contains []string `json:"contains,omitempty"`
+	Pattern  []string `json:"pattern,omitempty"`
 }
 
 type BodyMapping struct {
@@ -52,7 +52,7 @@ type RequestMapping struct {
 }
 
 func (m RequestMapping) HasPath() bool {
-	return m.Path.Exact != "" || m.Path.Contains != "" || m.Path.Pattern != ""
+	return m.Path.Exact != "" || len(m.Path.Contains) > 0 || len(m.Path.Pattern) > 0
 }
 
 func (m RequestMapping) HeaderScore() int {

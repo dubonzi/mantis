@@ -2,7 +2,10 @@
   "request": {
     "method": "GET",
     "path": {
-      "pattern": "/regex/[A-z0-9]+"
+      "pattern": [
+        "/regex/[A-z0-9]+",
+        "/regex/.{1}"
+      ]
     },
     "headers": {
       "accept": {

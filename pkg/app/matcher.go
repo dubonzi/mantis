@@ -69,12 +69,20 @@ func (b *BasicMatcher) matchPath(r Request, m Mapping) bool {
 		return r.Path == m.Request.Path.Exact
 	}
 
-	if m.Request.Path.Contains != "" {
-		return strings.Contains(r.Path, m.Request.Path.Contains)
+	if len(m.Request.Path.Contains) > 0 {
+		for _, c := range m.Request.Path.Contains {
+			if !strings.Contains(r.Path, c) {
+				return false
+			}
+		}
 	}
 
-	if m.Request.Path.Pattern != "" {
-		return b.regexCache.Match(m.Request.Path.Pattern, r.Path)
+	if len(m.Request.Path.Pattern) > 0 {
+		for _, p := range m.Request.Path.Pattern {
+			if !b.regexCache.Match(p, r.Path) {
+				return false
+			}
+		}
 	}
 
 	return true

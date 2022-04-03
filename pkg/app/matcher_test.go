@@ -39,7 +39,7 @@ func TestMatcher(t *testing.T) {
 		},
 		{
 			name:      "Should match GET request if path matches regex",
-			input:     Request{Method: "GET", Path: "/regex/231832"},
+			input:     Request{Method: "GET", Path: "/regex/2"},
 			want:      MatchResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: `Mapping with regex on path`},
 			wantMatch: true,
 		},
@@ -152,11 +152,11 @@ func getMappings() Mappings {
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "I'm a simple response"},
 			},
 			{
-				Request:  RequestMapping{Method: "GET", Path: PathMapping{Contains: "contains/123"}},
+				Request:  RequestMapping{Method: "GET", Path: PathMapping{Contains: []string{"contains/123"}}},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping contains path"},
 			},
 			{
-				Request:  RequestMapping{Method: "GET", Path: PathMapping{Pattern: "regex/[0-9]+"}},
+				Request:  RequestMapping{Method: "GET", Path: PathMapping{Pattern: []string{"regex/[0-9]+$", `regex/\d{1}`}}},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping with regex on path"},
 			},
 		},
@@ -178,7 +178,7 @@ func getMappings() Mappings {
 				Request: RequestMapping{
 					Method:  "POST",
 					Headers: map[string]HeaderMapping{"content-type": {Contains: "json"}},
-					Path:    PathMapping{Exact: "/bears/contains"},
+					Path:    PathMapping{Contains: []string{"bears", "contains"}},
 					Body:    BodyMapping{Contains: `"honey": true`},
 				},
 				Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "12345"}},

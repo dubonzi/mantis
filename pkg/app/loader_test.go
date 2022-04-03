@@ -30,7 +30,7 @@ var (
 			{
 				Request: RequestMapping{
 					Method:  "GET",
-					Path:    PathMapping{Pattern: "/regex/[A-z0-9]+"},
+					Path:    PathMapping{Pattern: []string{"/regex/[A-z0-9]+", "/regex/.{1}"}},
 					Headers: map[string]HeaderMapping{"accept": {Pattern: "application/(json|xml){1}"}},
 				},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"id": "regex","name": "Regex response"}`},

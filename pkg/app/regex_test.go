@@ -15,7 +15,7 @@ func TestRegexCache(t *testing.T) {
 		{
 			mapping: Mapping{
 				Request: RequestMapping{
-					Path: PathMapping{Pattern: `/[A-z0-9]+/`},
+					Path: PathMapping{Pattern: []string{`/[A-z0-9]+/`}},
 				},
 			},
 			wantLen: 1,
@@ -24,7 +24,7 @@ func TestRegexCache(t *testing.T) {
 		{
 			mapping: Mapping{
 				Request: RequestMapping{
-					Path:    PathMapping{Pattern: `[A-z0-9]+`},
+					Path:    PathMapping{Pattern: []string{`[A-z0-9]+`}},
 					Headers: map[string]HeaderMapping{"accept": {Pattern: ".*"}, "x-id": {Pattern: `\d*`}, "x-debug": {Pattern: ".*"}},
 					Body:    BodyMapping{Pattern: `\d{3}\.\d{3}\.\d{3}-\d{2}`},
 				},
@@ -35,7 +35,7 @@ func TestRegexCache(t *testing.T) {
 		{
 			mapping: Mapping{
 				Request: RequestMapping{
-					Path: PathMapping{Pattern: `([A-z0-9]+`},
+					Path: PathMapping{Pattern: []string{`([A-z0-9]+`}},
 				},
 			},
 			wantLen: 0,
@@ -73,8 +73,8 @@ func TestRegexCache(t *testing.T) {
 
 		if !tt.wantErr {
 
-			if tt.mapping.Request.Path.Pattern != "" {
-				_, ok := rc.cache[tt.mapping.Request.Path.Pattern]
+			for _, p := range tt.mapping.Request.Path.Pattern {
+				_, ok := rc.cache[p]
 				assert.Equal(t, true, ok)
 			}
 			if tt.mapping.Request.Body.Pattern != "" {

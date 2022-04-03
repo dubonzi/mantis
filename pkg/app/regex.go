@@ -18,8 +18,8 @@ func NewRegexCache() *RegexCache {
 
 func (r *RegexCache) AddFromMapping(mapping Mapping) error {
 	var err error
-	if mapping.Request.Path.Pattern != "" {
-		err = r.compileAndPut(mapping.Request.Path.Pattern)
+	for _, p := range mapping.Request.Path.Pattern {
+		err = r.compileAndPut(p)
 		if err != nil {
 			return errors.Wrapf(err, "failed to compile path regex with pattern:  %s ", mapping.Request.Path.Pattern)
 		}

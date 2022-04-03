@@ -30,7 +30,7 @@ func (b *BasicMatcher) Match(r Request) (*Mapping, bool) {
 		return nil, false
 	}
 
-	bestCandidate := [2]int{-1, 0} // index, score
+	bestIndex, bestScore := -1, 0
 
 	for i, mapping := range methodMappings {
 		var score int
@@ -51,14 +51,14 @@ func (b *BasicMatcher) Match(r Request) (*Mapping, bool) {
 			return &mapping, true
 		}
 
-		if score > bestCandidate[1] {
-			bestCandidate[0] = i
-			bestCandidate[1] = score
+		if score > bestScore {
+			bestIndex = i
+			bestScore = score
 		}
 	}
 
-	if bestCandidate[0] >= 0 {
-		return &methodMappings[bestCandidate[0]], false
+	if bestIndex >= 0 {
+		return &methodMappings[bestIndex], false
 	}
 
 	return nil, false

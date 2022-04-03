@@ -11,7 +11,7 @@ import (
 
 var (
 	validLoaderMappings = Mappings{
-		"GET": []Mapping{
+		"GET": []*Mapping{
 			{
 				Request: RequestMapping{
 					Method: "GET",
@@ -36,7 +36,7 @@ var (
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"id": "regex","name": "Regex response"}`},
 			},
 		},
-		"PUT": []Mapping{
+		"PUT": []*Mapping{
 			{
 				Request: RequestMapping{
 					Method: "PUT",
@@ -46,7 +46,7 @@ var (
 				Response: ResponseMapping{StatusCode: 204},
 			},
 		},
-		"POST": []Mapping{{
+		"POST": []*Mapping{{
 			Request: RequestMapping{
 				Method:  "POST",
 				Path:    CommonMatch{Exact: "/order"},

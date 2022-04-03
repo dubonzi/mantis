@@ -63,7 +63,7 @@ func TestRegexCache(t *testing.T) {
 
 	for _, tt := range tests {
 		rc := NewRegexCache()
-		err := rc.AddFromMapping(tt.mapping)
+		err := rc.AddFromMapping(&tt.mapping)
 		if !assert.IsEqual(err != nil, tt.wantErr) {
 			t.Log("error parsing regex pattern: ", err)
 			t.Fail()

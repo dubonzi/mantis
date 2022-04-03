@@ -134,7 +134,7 @@ func TestMatcher(t *testing.T) {
 
 func getMappings() Mappings {
 	return Mappings{
-		"GET": []Mapping{
+		"GET": []*Mapping{
 			{
 				Request: RequestMapping{
 					Method:  "GET",
@@ -160,7 +160,7 @@ func getMappings() Mappings {
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping with regex on path"},
 			},
 		},
-		"POST": []Mapping{
+		"POST": []*Mapping{
 			{
 				Request: RequestMapping{
 					Method:  "POST",
@@ -193,7 +193,7 @@ func getMappings() Mappings {
 				Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "999"}},
 			},
 		},
-		"PUT": []Mapping{
+		"PUT": []*Mapping{
 			{
 				Request:  RequestMapping{Method: "PUT", Path: CommonMatch{Exact: "/json/path"}, Body: BodyMatch{JsonPath: []string{"$.products[?(@.id == '12345')]"}}},
 				Response: ResponseMapping{StatusCode: 204, Headers: map[string]string{"multiple": "false"}},
@@ -207,7 +207,7 @@ func getMappings() Mappings {
 				Response: ResponseMapping{StatusCode: 204, Headers: map[string]string{"multiple": "true"}},
 			},
 		},
-		"DELETE": []Mapping{
+		"DELETE": []*Mapping{
 			{
 				Request:  RequestMapping{Method: "DELETE", Path: CommonMatch{Exact: "/cart/123"}},
 				Response: ResponseMapping{StatusCode: 204},

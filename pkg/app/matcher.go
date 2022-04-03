@@ -48,7 +48,7 @@ func (b *BasicMatcher) Match(r Request) (*Mapping, bool) {
 		}
 
 		if score == mapping.MaxScore() {
-			return &mapping, true
+			return mapping, true
 		}
 
 		if score > bestScore {
@@ -58,13 +58,13 @@ func (b *BasicMatcher) Match(r Request) (*Mapping, bool) {
 	}
 
 	if bestIndex >= 0 {
-		return &methodMappings[bestIndex], false
+		return methodMappings[bestIndex], false
 	}
 
 	return nil, false
 }
 
-func (b *BasicMatcher) matchPath(r Request, m Mapping) bool {
+func (b *BasicMatcher) matchPath(r Request, m *Mapping) bool {
 	if m.Request.Path.Exact != "" {
 		return r.Path == m.Request.Path.Exact
 	}
@@ -84,7 +84,7 @@ func (b *BasicMatcher) matchPath(r Request, m Mapping) bool {
 	return true
 }
 
-func (b *BasicMatcher) matchHeaders(r Request, m Mapping) bool {
+func (b *BasicMatcher) matchHeaders(r Request, m *Mapping) bool {
 	for mKey, mVal := range m.Request.Headers {
 		rVal, ok := r.Headers[strings.ToLower(mKey)]
 		if !ok {
@@ -114,7 +114,7 @@ func (b *BasicMatcher) matchHeaders(r Request, m Mapping) bool {
 	return true
 }
 
-func (b *BasicMatcher) matchBody(r Request, m Mapping) bool {
+func (b *BasicMatcher) matchBody(r Request, m *Mapping) bool {
 	if m.Request.Body.Exact != "" {
 		return r.Body == m.Request.Body.Exact
 	}

@@ -56,7 +56,7 @@ func (f *FileLoader) loadMappings(mappingsPath string, responsesPath string, map
 					m.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
 				}
 
-				err = f.regexCache.AddFromMapping(m)
+				err = f.regexCache.AddFromMapping(&m)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}

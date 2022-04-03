@@ -100,7 +100,7 @@ func (m Mapping) Validate() error {
 	return nil
 }
 
-type Mappings map[string][]Mapping
+type Mappings map[string][]*Mapping
 
 func (m Mappings) Put(mapping Mapping) error {
 	if err := mapping.Validate(); err != nil {
@@ -108,6 +108,6 @@ func (m Mappings) Put(mapping Mapping) error {
 	}
 
 	log.Tracef("adding mapping: %+v", mapping)
-	m[mapping.Request.Method] = append(m[mapping.Request.Method], mapping)
+	m[mapping.Request.Method] = append(m[mapping.Request.Method], &mapping)
 	return nil
 }

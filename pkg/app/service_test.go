@@ -28,7 +28,7 @@ func (m *mockDelayer) Apply(delay *Delay) {
 func TestService(t *testing.T) {
 
 	mappings := Mappings{
-		"GET": []Mapping{
+		"GET": []*Mapping{
 			{
 				Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/fixed/delay"}},
 				Response: ResponseMapping{StatusCode: 204, ResponseDelay: Delay{FixedDelay{Duration: Duration(time.Millisecond * 10000)}}},

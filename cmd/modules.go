@@ -26,6 +26,7 @@ func mainModule() fx.Option {
 			app.NewRegexCache,
 			app.NewFileLoader,
 			app.NewService,
+			app.NewJSONPathCache,
 			func(loader *app.FileLoader) (app.Mappings, error) { return loader.GetMappings() },
 			fx.Annotate(app.NewMatcher, fx.As(new(app.Matcher))),
 			fx.Annotate(app.NewResponseDelayer, fx.As(new(app.Delayer))),

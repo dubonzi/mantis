@@ -132,7 +132,9 @@ func (b *BasicMatcher) matchBody(r Request, m *Mapping) bool {
 	}
 
 	if len(m.Request.Body.JsonPath) > 0 {
-		return b.jsonPathCache.Match(m.Request.Body.JsonPath, r.Body)
+		if !b.jsonPathCache.Match(m.Request.Body.JsonPath, r.Body) {
+			return false
+		}
 	}
 
 	return true

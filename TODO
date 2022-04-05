@@ -1,4 +1,3 @@
-Add support for combining multiple types of matching types ie. Path.Pattern + Path.Contains
 Sort mappings based on their cost (regex/jsonPath cost more than an exact match for example)
 Add delay option to response (normal distribution)
 Add scenarios support

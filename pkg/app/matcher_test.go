@@ -44,6 +44,18 @@ func TestMatcher(t *testing.T) {
 			wantMatch: true,
 		},
 		{
+			name:      "Should match GET request combining path regex and contains",
+			input:     Request{Method: "GET", Path: "/combination/123"},
+			want:      MatchResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "text/plain"}, Body: `Mapping combining path regex and contains`},
+			wantMatch: true,
+		},
+		{
+			name:      "Should match GET request combining path/headers regex and contains",
+			input:     Request{Method: "GET", Path: "/combination/__1234?abc=s2", Headers: map[string]string{"accept": "application/json"}},
+			want:      MatchResult{StatusCode: 200, Matched: true, Headers: map[string]string{"content-type": "application/json"}, Body: `{"message": "Mapping combining path/headers regex and contains"}`},
+			wantMatch: true,
+		},
+		{
 			name:      "Should match POST request with body",
 			input:     Request{Method: "POST", Path: "/order", Headers: map[string]string{"authorization": "Bearer ItsMe"}, Body: `{"cart": "555"}`},
 			want:      MatchResult{StatusCode: 201, Matched: true, Headers: map[string]string{"location": "12345"}},
@@ -76,6 +88,21 @@ func TestMatcher(t *testing.T) {
 		{
 			name:      "Should not match GET request if path does not match regex",
 			input:     Request{Method: "GET", Path: "/regex/abc"},
+			wantMatch: false,
+		},
+		{
+			name:      "Should not match POST request if header-exact does not match",
+			input:     Request{Method: "POST", Path: "/order", Headers: map[string]string{"authorization": "Bearer NotMe"}},
+			wantMatch: false,
+		},
+		{
+			name:      "Should not match POST request if header-contains does not match",
+			input:     Request{Method: "POST", Path: "/bears/contains", Headers: map[string]string{"content-type": "xml"}},
+			wantMatch: false,
+		},
+		{
+			name:      "Should not match POST request if body-contains does not match",
+			input:     Request{Method: "POST", Path: "/bears/contains", Headers: map[string]string{"content-type": "json"}, Body: `no match`},
 			wantMatch: false,
 		},
 		{
@@ -155,8 +182,20 @@ func getMappings() Mappings {
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping contains path"},
 		},
 		{
-			Request:  RequestMapping{Method: "GET", Path: CommonMatch{Patterns: []string{"regex/[0-9]+$", `regex/\d{1}`}}},
+			Request:  RequestMapping{Method: "GET", Path: CommonMatch{Patterns: []string{"regex/[0-9]+$", `regex/\d{1}$`}}},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping with regex on path"},
+		},
+		{
+			Request:  RequestMapping{Method: "GET", Path: CommonMatch{Patterns: []string{"combination/[0-9]+$"}, Contains: []string{"123"}}},
+			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping combining path regex and contains"},
+		},
+		{
+			Request: RequestMapping{
+				Method:  "GET",
+				Path:    CommonMatch{Contains: []string{"1234", "abc"}, Patterns: []string{`[_]{2}`}},
+				Headers: map[string]CommonMatch{"accept": {Contains: []string{"application"}, Patterns: []string{"application/(json|xml){1}$"}}},
+			},
+			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"message": "Mapping combining path/headers regex and contains"}`},
 		},
 		{
 			Request: RequestMapping{

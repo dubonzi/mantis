@@ -4,28 +4,20 @@ import (
 	"strings"
 )
 
-var _ Matcher = new(BasicMatcher)
-
-type Matcher interface {
-	Match(Request) (mapping *Mapping, matched bool)
-}
-
-type BasicMatcher struct {
-	mappings      Mappings
+type Matcher struct {
 	regexCache    *RegexCache
 	jsonPathCache *JSONPathCache
 }
 
-func NewMatcher(m Mappings, r *RegexCache, j *JSONPathCache) *BasicMatcher {
-	return &BasicMatcher{
-		mappings:      m,
+func NewMatcher(r *RegexCache, j *JSONPathCache) *Matcher {
+	return &Matcher{
 		regexCache:    r,
 		jsonPathCache: j,
 	}
 }
 
-func (b *BasicMatcher) Match(r Request) (*Mapping, bool) {
-	methodMappings, ok := b.mappings[r.Method]
+func (b *Matcher) Match(r Request, mappings Mappings) (*Mapping, bool) {
+	methodMappings, ok := mappings[r.Method]
 	if !ok {
 		return nil, false
 	}
@@ -64,7 +56,7 @@ func (b *BasicMatcher) Match(r Request) (*Mapping, bool) {
 	return nil, false
 }
 
-func (b *BasicMatcher) matchPath(r Request, m *Mapping) bool {
+func (b *Matcher) matchPath(r Request, m *Mapping) bool {
 	if m.Request.Path.Exact != "" {
 		return r.Path == m.Request.Path.Exact
 	}
@@ -84,7 +76,7 @@ func (b *BasicMatcher) matchPath(r Request, m *Mapping) bool {
 	return true
 }
 
-func (b *BasicMatcher) matchHeaders(r Request, m *Mapping) bool {
+func (b *Matcher) matchHeaders(r Request, m *Mapping) bool {
 	for mKey, mVal := range m.Request.Headers {
 		rVal, ok := r.Headers[strings.ToLower(mKey)]
 		if !ok {
@@ -114,7 +106,7 @@ func (b *BasicMatcher) matchHeaders(r Request, m *Mapping) bool {
 	return true
 }
 
-func (b *BasicMatcher) matchBody(r Request, m *Mapping) bool {
+func (b *Matcher) matchBody(r Request, m *Mapping) bool {
 	if m.Request.Body.Exact != "" {
 		return r.Body == m.Request.Body.Exact
 	}

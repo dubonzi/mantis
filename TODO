@@ -1,4 +1,5 @@
 Add scenarios support
+Replace assert with testify's
 Add a 'Context' with an API to track Mappings/Matching statuses
 README
 

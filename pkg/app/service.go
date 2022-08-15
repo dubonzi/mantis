@@ -11,8 +11,9 @@ const (
 )
 
 type Service struct {
-	matcher Matcher
-	delayer Delayer
+	matcher  *Matcher
+	delayer  Delayer
+	mappings Mappings
 }
 
 type MatchResult struct {
@@ -58,12 +59,12 @@ type NotFoundResponse struct {
 	ClosestMapping *RequestMapping `json:"closestMapping,omitempty"`
 }
 
-func NewService(matcher Matcher, delayer Delayer) *Service {
-	return &Service{matcher, delayer}
+func NewService(mappings Mappings, matcher *Matcher, delayer Delayer) *Service {
+	return &Service{matcher, delayer, mappings}
 }
 
 func (s *Service) MatchRequest(r Request) MatchResult {
-	mapping, matched := s.matcher.Match(r)
+	mapping, matched := s.matcher.Match(r, s.mappings)
 
 	result := NewMatchResult(mapping, r, matched)
 

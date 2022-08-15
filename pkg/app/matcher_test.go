@@ -139,11 +139,11 @@ func TestMatcher(t *testing.T) {
 			_ = jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
 		}
 	}
-	matcher := NewMatcher(mappings, regexCache, jsonPathCache)
+	matcher := NewMatcher(regexCache, jsonPathCache)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mapping, matched := matcher.Match(tt.input)
+			mapping, matched := matcher.Match(tt.input, mappings)
 
 			result := NewMatchResult(mapping, tt.input, matched)
 

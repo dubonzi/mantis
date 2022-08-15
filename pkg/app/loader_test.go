@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/americanas-go/config"
-	"github.com/go-playground/assert/v2"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -48,6 +48,34 @@ var (
 				Path:    CommonMatch{Exact: "/order"},
 				Headers: map[string]CommonMatch{"content-type": {Exact: "application/json"}},
 				Body:    BodyMatch{CommonMatch: CommonMatch{Contains: []string{"orderId", "999"}}},
+			},
+			Response: ResponseMapping{StatusCode: 200},
+		},
+		{
+			Scenario: ScenarioMapping{
+				Name:          "My Scenario",
+				StartingState: true,
+				State:         "First state",
+				NewState:      "Second state",
+			},
+			Request: RequestMapping{
+				Method:  "POST",
+				Path:    CommonMatch{Exact: "/scenario"},
+				Headers: map[string]CommonMatch{"content-type": {Exact: "application/json"}},
+				Body:    BodyMatch{CommonMatch: CommonMatch{Contains: []string{"scenario", "test"}}},
+			},
+			Response: ResponseMapping{StatusCode: 200},
+		},
+		{
+			Scenario: ScenarioMapping{
+				Name:  "My Scenario",
+				State: "Second state",
+			},
+			Request: RequestMapping{
+				Method:  "POST",
+				Path:    CommonMatch{Exact: "/scenario"},
+				Headers: map[string]CommonMatch{"content-type": {Exact: "application/json"}},
+				Body:    BodyMatch{CommonMatch: CommonMatch{Contains: []string{"scenario", "test"}}},
 			},
 			Response: ResponseMapping{StatusCode: 200},
 		},
@@ -95,7 +123,7 @@ func TestGetMappings(t *testing.T) {
 				t.FailNow()
 			}
 
-			assert.Equal(t, mappings, tt.wantMappings)
+			require.Equal(t, mappings, tt.wantMappings)
 		})
 	}
 }
@@ -146,12 +174,12 @@ func TestDecodeFile(t *testing.T) {
 						t.Log("did not expect an error, but got: ", err)
 						t.FailNow()
 					}
-					assert.Equal(t, err.Error(), tt.wantErr.Error())
+					require.Equal(t, err.Error(), tt.wantErr.Error())
 				}
 				return
 			}
 
-			assert.Equal(t, mapping, tt.wantMapping)
+			require.Equal(t, mapping, tt.wantMapping)
 		})
 	}
 }
@@ -195,12 +223,12 @@ func TestLoadMappings(t *testing.T) {
 						t.Log("did not expect an error, but got: ", err)
 						t.FailNow()
 					}
-					assert.Equal(t, err.Error(), tt.wantErr)
+					require.Equal(t, err.Error(), tt.wantErr)
 				}
 				return
 			}
 
-			assert.Equal(t, mappings, tt.wantMappings)
+			require.Equal(t, mappings, tt.wantMappings)
 		})
 	}
 

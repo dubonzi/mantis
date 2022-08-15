@@ -14,6 +14,7 @@ const (
 )
 
 type Mapping struct {
+	Scenario ScenarioMapping `json:"scenario"`
 	Request  RequestMapping  `json:"request"`
 	Response ResponseMapping `json:"response"`
 
@@ -134,6 +135,13 @@ func (m RequestMapping) BodyScore() int {
 		return 1
 	}
 	return len(m.Body.JsonPath) + len(m.Body.Contains) + len(m.Body.Patterns)
+}
+
+type ScenarioMapping struct {
+	Name          string `json:"name"`
+	StartingState bool   `json:"startingState"`
+	State         string `json:"state"`
+	NewState      string `json:"newState"`
 }
 
 type ResponseMapping struct {

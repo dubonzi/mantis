@@ -28,6 +28,7 @@ func mainModule() fx.Option {
 			app.NewService,
 			app.NewJSONPathCache,
 			app.NewMatcher,
+			app.NewScenarioHandler,
 			func(loader *app.Loader) (app.Mappings, error) { return loader.GetMappings() },
 			fx.Annotate(app.NewResponseDelayer, fx.As(new(app.Delayer))),
 		),

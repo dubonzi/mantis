@@ -52,7 +52,7 @@ var (
 			Response: ResponseMapping{StatusCode: 200},
 		},
 		{
-			Scenario: ScenarioMapping{
+			Scenario: &ScenarioMapping{
 				Name:          "My Scenario",
 				StartingState: true,
 				State:         "First state",
@@ -67,7 +67,7 @@ var (
 			Response: ResponseMapping{StatusCode: 200},
 		},
 		{
-			Scenario: ScenarioMapping{
+			Scenario: &ScenarioMapping{
 				Name:  "My Scenario",
 				State: "Second state",
 			},
@@ -111,7 +111,7 @@ func TestGetMappings(t *testing.T) {
 		},
 	}
 
-	loader := NewLoader(NewRegexCache(), NewJSONPathCache())
+	loader := NewLoader(NewRegexCache(), NewJSONPathCache(), NewScenarioHandler())
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -162,7 +162,7 @@ func TestDecodeFile(t *testing.T) {
 		// TODO: Test to check on the other error path
 	}
 
-	loader := NewLoader(NewRegexCache(), NewJSONPathCache())
+	loader := NewLoader(NewRegexCache(), NewJSONPathCache(), NewScenarioHandler())
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -209,7 +209,7 @@ func TestLoadMappings(t *testing.T) {
 		},
 	}
 
-	loader := NewLoader(NewRegexCache(), NewJSONPathCache())
+	loader := NewLoader(NewRegexCache(), NewJSONPathCache(), NewScenarioHandler())
 
 	mappings := make(Mappings)
 

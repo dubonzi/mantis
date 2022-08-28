@@ -21,20 +21,21 @@ func FileNotFound(path string) error {
 }
 
 type Loader struct {
-	regexCache    *RegexCache
-	jsonPathCache *JSONPathCache
+	regexCache      *RegexCache
+	jsonPathCache   *JSONPathCache
+	scenarioHandler *ScenarioHandler
 }
 
-func NewLoader(regexCache *RegexCache, jsonPathCache *JSONPathCache) *Loader {
-	return &Loader{regexCache, jsonPathCache}
+func NewLoader(regexCache *RegexCache, jsonPathCache *JSONPathCache, scenarioHandler *ScenarioHandler) *Loader {
+	return &Loader{regexCache, jsonPathCache, scenarioHandler}
 }
 
-func (f *Loader) GetMappings() (Mappings, error) {
+func (loader *Loader) GetMappings() (Mappings, error) {
 	mappingsPath := config.String("loader.path.mapping")
 	responsesPath := config.String("loader.path.response")
 
 	mappings := make(Mappings)
-	err := f.loadMappings(mappingsPath, responsesPath, mappings)
+	err := loader.loadMappings(mappingsPath, responsesPath, mappings)
 	if err != nil {
 		return mappings, err
 	}
@@ -42,13 +43,13 @@ func (f *Loader) GetMappings() (Mappings, error) {
 	return mappings, nil
 }
 
-func (f *Loader) loadMappings(mappingsPath string, responsesPath string, mappings Mappings) error {
+func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, mappings Mappings) error {
 	err := filepath.WalkDir(
 		mappingsPath,
 		func(path string, d fs.DirEntry, err error) error {
 			if d != nil && !d.IsDir() {
 				log.Tracef("reading file '%s'", path)
-				mapping, err := f.decodeFile(path)
+				mapping, err := loader.decodeFile(path)
 				if err != nil {
 					return err
 				}
@@ -61,15 +62,17 @@ func (f *Loader) loadMappings(mappingsPath string, responsesPath string, mapping
 					mapping.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
 				}
 
-				err = f.regexCache.AddFromMapping(mapping)
+				err = loader.regexCache.AddFromMapping(mapping)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}
 
-				err = f.jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
+				err = loader.jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}
+
+				loader.scenarioHandler.AddScenario(mapping)
 
 				err = mappings.Put(mapping)
 				if err != nil {
@@ -82,6 +85,11 @@ func (f *Loader) loadMappings(mappingsPath string, responsesPath string, mapping
 
 	if err != nil {
 		return err
+	}
+
+	err = loader.scenarioHandler.ValidateScenarioStates()
+	if err != nil {
+		return errors.Wrapf(err, "invalid scenario states")
 	}
 
 	log.Info("mappings loaded successfully")

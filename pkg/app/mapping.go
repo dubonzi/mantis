@@ -14,9 +14,9 @@ const (
 )
 
 type Mapping struct {
-	Scenario ScenarioMapping `json:"scenario"`
-	Request  RequestMapping  `json:"request"`
-	Response ResponseMapping `json:"response"`
+	Scenario *ScenarioMapping `json:"scenario"`
+	Request  RequestMapping   `json:"request"`
+	Response ResponseMapping  `json:"response"`
 
 	MaxScore int
 	Cost     int
@@ -43,8 +43,13 @@ func (m Mapping) Validate() error {
 	if m.Request.Method == "" {
 		errs = append(errs, ValidationError{"Request.Method", "Method is required"})
 	}
+
 	if !m.Request.HasPath() {
 		errs = append(errs, ValidationError{"Request.Path", "Path mapping is required"})
+	}
+
+	if m.Scenario != nil {
+		errs = append(errs, m.Scenario.Validate()...)
 	}
 
 	if len(errs) > 0 {
@@ -141,6 +146,18 @@ type ScenarioMapping struct {
 	StartingState bool   `json:"startingState"`
 	State         string `json:"state"`
 	NewState      string `json:"newState"`
+}
+
+func (s *ScenarioMapping) Validate() ValidationErrors {
+	errs := make(ValidationErrors, 0)
+	if s.Name == "" {
+		errs = append(errs, ValidationError{"Scenario.Name", "Scenario name is required"})
+	}
+	if s.State == "" {
+		errs = append(errs, ValidationError{"Scenario.State", "Scenario state is required"})
+	}
+
+	return errs
 }
 
 type ResponseMapping struct {

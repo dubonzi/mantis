@@ -3,7 +3,7 @@ package app
 import (
 	"encoding/json"
 	"io/fs"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 
@@ -104,7 +104,7 @@ func (*Loader) decodeFile(path string) (Mapping, error) {
 }
 
 func loadFile(path string) ([]byte, error) {
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, FileNotFound(path)

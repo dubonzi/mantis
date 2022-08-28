@@ -16,10 +16,10 @@ func NewMatcher(r *RegexCache, j *JSONPathCache) *Matcher {
 	}
 }
 
-func (b *Matcher) Match(r Request, mappings Mappings) (*Mapping, bool) {
+func (b *Matcher) Match(r Request, mappings Mappings) (Mapping, bool) {
 	methodMappings, ok := mappings[r.Method]
 	if !ok {
-		return nil, false
+		return Mapping{}, false
 	}
 
 	bestIndex, bestScore := -1, 0
@@ -53,10 +53,10 @@ func (b *Matcher) Match(r Request, mappings Mappings) (*Mapping, bool) {
 		return methodMappings[bestIndex], false
 	}
 
-	return nil, false
+	return Mapping{}, false
 }
 
-func (b *Matcher) matchPath(r Request, m *Mapping) bool {
+func (b *Matcher) matchPath(r Request, m Mapping) bool {
 	if m.Request.Path.Exact != "" {
 		return r.Path == m.Request.Path.Exact
 	}
@@ -76,7 +76,7 @@ func (b *Matcher) matchPath(r Request, m *Mapping) bool {
 	return true
 }
 
-func (b *Matcher) matchHeaders(r Request, m *Mapping) bool {
+func (b *Matcher) matchHeaders(r Request, m Mapping) bool {
 	for mKey, mVal := range m.Request.Headers {
 		rVal, ok := r.Headers[strings.ToLower(mKey)]
 		if !ok {
@@ -106,7 +106,7 @@ func (b *Matcher) matchHeaders(r Request, m *Mapping) bool {
 	return true
 }
 
-func (b *Matcher) matchBody(r Request, m *Mapping) bool {
+func (b *Matcher) matchBody(r Request, m Mapping) bool {
 	if m.Request.Body.Exact != "" {
 		return r.Body == m.Request.Body.Exact
 	}

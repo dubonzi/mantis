@@ -61,7 +61,7 @@ func (f *Loader) loadMappings(mappingsPath string, responsesPath string, mapping
 					m.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
 				}
 
-				err = f.regexCache.AddFromMapping(&m)
+				err = f.regexCache.AddFromMapping(m)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}
@@ -71,7 +71,7 @@ func (f *Loader) loadMappings(mappingsPath string, responsesPath string, mapping
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}
 
-				err = mappings.Put(&m)
+				err = mappings.Put(m)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}

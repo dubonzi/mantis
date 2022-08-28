@@ -54,9 +54,9 @@ func (m *Mapping) Validate() error {
 	return nil
 }
 
-type Mappings map[string][]*Mapping
+type Mappings map[string][]Mapping
 
-func (m Mappings) Put(mapping *Mapping) error {
+func (m Mappings) Put(mapping Mapping) error {
 	if err := mapping.Validate(); err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (m Mappings) Put(mapping *Mapping) error {
 	return nil
 }
 
-func (m Mappings) PutAll(mappings []*Mapping) error {
+func (m Mappings) PutAll(mappings []Mapping) error {
 	for _, mapping := range mappings {
 		err := m.Put(mapping)
 		if err != nil {

@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	validLoaderMappings = []*Mapping{
+	validLoaderMappings = []Mapping{
 		{
 			Request: RequestMapping{
 				Method: "GET",

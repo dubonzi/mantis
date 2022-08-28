@@ -145,7 +145,7 @@ func TestMatcher(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mapping, matched := matcher.Match(tt.input, mappings)
 
-			result := NewMatchResult(mapping, tt.input, matched)
+			result := NewMatchResult(&mapping, tt.input, matched)
 
 			if matched != tt.wantMatch {
 				t.Logf("Matching conditions differ: got '%t', want '%t'", matched, tt.wantMatch)
@@ -160,7 +160,7 @@ func TestMatcher(t *testing.T) {
 }
 
 func getMappings() Mappings {
-	mappings := []*Mapping{
+	mappings := []Mapping{
 		{
 			Request: RequestMapping{
 				Method:  "GET",

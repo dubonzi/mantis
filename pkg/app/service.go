@@ -66,7 +66,7 @@ func NewService(mappings Mappings, matcher *Matcher, delayer Delayer) *Service {
 func (s *Service) MatchRequest(r Request) MatchResult {
 	mapping, matched := s.matcher.Match(r, s.mappings)
 
-	result := NewMatchResult(mapping, r, matched)
+	result := NewMatchResult(&mapping, r, matched)
 
 	if matched {
 		s.delayer.Apply(&mapping.Response.ResponseDelay)

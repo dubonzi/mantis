@@ -16,7 +16,7 @@ func NewRegexCache() *RegexCache {
 	}
 }
 
-func (r *RegexCache) AddFromMapping(mapping *Mapping) error {
+func (r *RegexCache) AddFromMapping(mapping Mapping) error {
 	var err error
 	for _, p := range mapping.Request.Path.Patterns {
 		err = r.compileAndPut(p)

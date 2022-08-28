@@ -48,30 +48,30 @@ func (f *Loader) loadMappings(mappingsPath string, responsesPath string, mapping
 		func(path string, d fs.DirEntry, err error) error {
 			if d != nil && !d.IsDir() {
 				log.Tracef("reading file '%s'", path)
-				m, err := f.decodeFile(path)
+				mapping, err := f.decodeFile(path)
 				if err != nil {
 					return err
 				}
 
-				if m.Response.BodyFile != "" {
-					bodyContent, err := loadFile(filepath.Join(responsesPath, m.Response.BodyFile))
+				if mapping.Response.BodyFile != "" {
+					bodyContent, err := loadFile(filepath.Join(responsesPath, mapping.Response.BodyFile))
 					if err != nil {
 						return errors.Wrapf(err, "error loading response body file for mapping file [ %s ]", path)
 					}
-					m.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
+					mapping.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
 				}
 
-				err = f.regexCache.AddFromMapping(m)
+				err = f.regexCache.AddFromMapping(mapping)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}
 
-				err = f.jsonPathCache.AddExpressions(m.Request.Body.JsonPath)
+				err = f.jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}
 
-				err = mappings.Put(m)
+				err = mappings.Put(mapping)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}

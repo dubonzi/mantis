@@ -22,7 +22,9 @@ type Mapping struct {
 	Cost     int
 }
 
-func (m *Mapping) CalcCost() {
+func (m Mapping) CalcMaxScoreAndCost() Mapping {
+	m.MaxScore = m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
+
 	var cost int
 
 	cost += m.Request.Path.Cost() + m.Request.Body.Cost()
@@ -32,13 +34,11 @@ func (m *Mapping) CalcCost() {
 	}
 
 	m.Cost = cost
+
+	return m
 }
 
-func (m *Mapping) CalcMaxScore() {
-	m.MaxScore = m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
-}
-
-func (m *Mapping) Validate() error {
+func (m Mapping) Validate() error {
 	errs := make(ValidationErrors, 0)
 	if m.Request.Method == "" {
 		errs = append(errs, ValidationError{"Request.Method", "Method is required"})
@@ -63,8 +63,7 @@ func (m Mappings) Put(mapping Mapping) error {
 
 	log.Tracef("adding mapping: %+v", mapping)
 
-	mapping.CalcMaxScore()
-	mapping.CalcCost()
+	mapping = mapping.CalcMaxScoreAndCost()
 
 	m[mapping.Request.Method] = append(m[mapping.Request.Method], mapping)
 	return nil

@@ -8,10 +8,11 @@ import (
 
 func TestMatcher(t *testing.T) {
 	tests := []struct {
-		name      string
-		input     Request
-		want      MatchResult
-		wantMatch bool
+		name        string
+		input       Request
+		want        MatchResult
+		wantMatch   bool
+		wantPartial bool
 	}{
 		{
 			name:      "Should match simple request",
@@ -107,12 +108,29 @@ func TestMatcher(t *testing.T) {
 		},
 		{
 			name:      "Should not match a request when the method is not mapped",
-			input:     Request{Method: "HEAD", Path: "/gopher/regex", Headers: map[string]string{"content-type": "application/json"}, Body: `{"name": "Mr Gopher", "honey": true}`},
+			input:     Request{Method: "HEAD", Path: "/gopher/regex"},
 			wantMatch: false,
 		},
 		{
-			name:  "Should return 404 with the closest mapping when no match is found",
-			input: Request{Method: "GET", Path: "/bears/321"},
+			name:        "Should return 404 without closest match when no component matches",
+			input:       Request{Method: "Post", Path: "/nomatchhere", Body: `{"message": "I have no matches :("}`},
+			wantMatch:   false,
+			wantPartial: false,
+			want: MatchResult{
+				Matched:    false,
+				StatusCode: 404,
+				Body: NotFoundResponse{
+					Message:        NoMappingFoundMessage,
+					Request:        Request{Method: "GET", Path: "/nomatchhere"},
+					ClosestMapping: nil,
+				},
+			},
+		},
+		{
+			name:        "Should return 404 with the closest mapping when no match is found",
+			input:       Request{Method: "GET", Path: "/bears/321"},
+			wantMatch:   false,
+			wantPartial: true,
 			want: MatchResult{
 				Matched:    false,
 				StatusCode: 404,
@@ -126,7 +144,6 @@ func TestMatcher(t *testing.T) {
 					},
 				},
 			},
-			wantMatch: false,
 		},
 	}
 
@@ -143,16 +160,25 @@ func TestMatcher(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mapping, matched := matcher.Match(tt.input, mappings)
+			mapping, matched, partial := matcher.Match(tt.input, mappings)
 
-			result := NewMatchResult(&mapping, tt.input, matched)
+			result := NewMatchResult(&mapping, tt.input, matched, partial)
 
 			if matched != tt.wantMatch {
 				t.Logf("Matching conditions differ: got '%t', want '%t'", matched, tt.wantMatch)
 			}
 
+			if partial != tt.wantPartial {
+				t.Logf("Partial matching conditions differ: got '%t', want '%t'", matched, tt.wantMatch)
+			}
+
 			if tt.wantMatch && !assert.IsEqual(result, tt.want) {
-				t.Logf("%s doest not equal %s", result, tt.want)
+				t.Logf("%s doesnt not equal %s", result, tt.want)
+				t.FailNow()
+			}
+
+			if tt.wantPartial && !assert.IsEqual(result, tt.want) {
+				t.Logf("partial match %s doesnt not equal %s", result, tt.want)
 				t.FailNow()
 			}
 		})

@@ -16,10 +16,10 @@ func NewMatcher(r *RegexCache, j *JSONPathCache) *Matcher {
 	}
 }
 
-func (b *Matcher) Match(r Request, mappings Mappings) (Mapping, bool) {
+func (b *Matcher) Match(r Request, mappings Mappings) (mapping Mapping, matched bool, partial bool) {
 	methodMappings, ok := mappings[r.Method]
 	if !ok {
-		return Mapping{}, false
+		return Mapping{}, false, false
 	}
 
 	bestIndex, bestScore := -1, 0
@@ -40,7 +40,7 @@ func (b *Matcher) Match(r Request, mappings Mappings) (Mapping, bool) {
 		}
 
 		if score == mapping.MaxScore {
-			return mapping, true
+			return mapping, true, false
 		}
 
 		if score > bestScore {
@@ -50,10 +50,10 @@ func (b *Matcher) Match(r Request, mappings Mappings) (Mapping, bool) {
 	}
 
 	if bestIndex >= 0 {
-		return methodMappings[bestIndex], false
+		return methodMappings[bestIndex], false, true
 	}
 
-	return Mapping{}, false
+	return Mapping{}, false, false
 }
 
 func (b *Matcher) matchPath(r Request, m Mapping) bool {

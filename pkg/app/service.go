@@ -23,20 +23,20 @@ type MatchResult struct {
 	Matched    bool
 }
 
-func NewMatchResult(mapping *Mapping, r Request, matched bool) MatchResult {
+func NewMatchResult(mapping *Mapping, r Request, matched bool, partial bool) MatchResult {
 	result := MatchResult{
 		Matched: matched,
 	}
 
-	if mapping == nil {
+	if partial {
+		result.Body = buildNotFoundResponse(r, &mapping.Request)
 		result.StatusCode = http.StatusNotFound
-		result.Body = buildNotFoundResponse(r, nil)
 		return result
 	}
 
 	if !matched {
-		result.Body = buildNotFoundResponse(r, &mapping.Request)
 		result.StatusCode = http.StatusNotFound
+		result.Body = buildNotFoundResponse(r, nil)
 		return result
 	}
 
@@ -64,9 +64,9 @@ func NewService(mappings Mappings, matcher *Matcher, delayer Delayer) *Service {
 }
 
 func (s *Service) MatchRequest(r Request) MatchResult {
-	mapping, matched := s.matcher.Match(r, s.mappings)
+	mapping, matched, partial := s.matcher.Match(r, s.mappings)
 
-	result := NewMatchResult(&mapping, r, matched)
+	result := NewMatchResult(&mapping, r, matched, partial)
 
 	if matched {
 		s.delayer.Apply(&mapping.Response.ResponseDelay)

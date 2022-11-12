@@ -1,10 +1,11 @@
 Add scenarios support
 Replace assert with testify's
-Add a 'Context' with an API to track Mappings/Matching statuses
+Add more tests
 README
 
 -- v1.0? --
 
+Add a 'Context' with an API to track Mappings/Matching statuses
 Sort mappings based on their cost (regex/jsonPath cost more than an exact match for example)
 Add uniqueid and date to each request
 Add delay option to response (normal distribution)

@@ -22,7 +22,7 @@ type Mapping struct {
 	Cost     int
 }
 
-func (m Mapping) CalcMaxScoreAndCost() Mapping {
+func (m Mapping) CalcMaxScoreAndCost() Mapping { // TODO: Add Score and Cost to tests
 	m.MaxScore = m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
 
 	var cost int

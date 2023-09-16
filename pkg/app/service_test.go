@@ -7,10 +7,6 @@ import (
 	"github.com/go-playground/assert/v2"
 )
 
-type wantedDelay struct {
-	fixed bool
-}
-
 type mockDelayer struct {
 	FixedCalled bool
 }
@@ -32,10 +28,12 @@ func TestService(t *testing.T) {
 			{
 				Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/fixed/delay"}},
 				Response: ResponseMapping{StatusCode: 204, ResponseDelay: Delay{FixedDelay{Duration: Duration(time.Millisecond * 10000)}}},
+				MaxScore: 1,
 			},
 			{
 				Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/no/delay"}},
 				Response: ResponseMapping{StatusCode: 204},
+				MaxScore: 1,
 			},
 		},
 	}
@@ -44,19 +42,19 @@ func TestService(t *testing.T) {
 		name       string
 		request    Request
 		wantResult MatchResult
-		wantDelay  wantedDelay
+		wantDelay  bool
 	}{
 		{
 			name:       "Should match request with no delay",
 			request:    Request{Method: "GET", Path: "/no/delay"},
 			wantResult: MatchResult{StatusCode: 204, Matched: true},
-			wantDelay:  wantedDelay{false},
+			wantDelay:  false,
 		},
 		{
 			name:       "Should match request with fixed delay",
 			request:    Request{Method: "GET", Path: "/fixed/delay"},
 			wantResult: MatchResult{StatusCode: 204, Matched: true},
-			wantDelay:  wantedDelay{true},
+			wantDelay:  true,
 		},
 	}
 
@@ -64,17 +62,13 @@ func TestService(t *testing.T) {
 
 	for _, tt := range tests {
 		delayer := mockDelayer{}
-		service := NewService(mappings, matcher, &delayer)
+		service := NewService(mappings, matcher, NewScenarioHandler(matcher), &delayer)
 
 		t.Run(tt.name, func(t *testing.T) {
 			res := service.MatchRequest(tt.request)
 			assert.Equal(t, res, tt.wantResult)
-			assertDelay(tt.wantDelay, delayer)
+			assert.Equal(t, tt.wantDelay, delayer.FixedCalled)
 		})
 	}
 
-}
-
-func assertDelay(want wantedDelay, delayer mockDelayer) bool {
-	return want.fixed == delayer.FixedCalled
 }

@@ -20,7 +20,9 @@ type ScenarioState struct {
 }
 
 type ScenarioHandler struct {
-	scenarios map[string]ScenarioState
+	matcher          *Matcher
+	scenarioMappings Mappings
+	scenarios        map[string]ScenarioState
 }
 
 type ScenarioValidationError struct {
@@ -34,9 +36,11 @@ func (v ScenarioValidationErrors) Error() string {
 	return fmt.Sprintf("scenario definition is invalid: %s", oj.JSON(v))
 }
 
-func NewScenarioHandler() *ScenarioHandler {
+func NewScenarioHandler(matcher *Matcher) *ScenarioHandler {
 	return &ScenarioHandler{
-		scenarios: map[string]ScenarioState{},
+		scenarios:        map[string]ScenarioState{},
+		scenarioMappings: make(Mappings),
+		matcher:          matcher,
 	}
 }
 
@@ -65,6 +69,28 @@ func (hand *ScenarioHandler) AddScenario(mapping Mapping) {
 	sc.States[scMapping.State] = mapping
 
 	hand.scenarios[scMapping.Name] = sc
+	hand.scenarioMappings.Put(mapping)
+}
+
+func (hand *ScenarioHandler) MatchScenario(request Request) (Mapping, bool, bool) {
+	mapping, matched, partial := hand.matcher.Match(request, hand.scenarioMappings)
+	if !matched || partial {
+		return Mapping{}, false, false
+	}
+
+	if mapping.Scenario == nil {
+		return Mapping{}, false, false
+	}
+	state := hand.scenarios[mapping.Scenario.Name]
+	if mapping.Scenario.State != state.CurrentState {
+		return Mapping{}, false, true
+	}
+	result := state.States[state.CurrentState]
+	if result.Scenario.NewState != "" {
+		state.CurrentState = result.Scenario.NewState
+		hand.scenarios[mapping.Scenario.Name] = state
+	}
+	return result, true, false
 }
 
 // Validates the following:

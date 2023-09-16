@@ -1,16 +1,17 @@
 Add scenarios support
-Replace assert with testify's
-Add more tests
 README
 
 -- v1.0? --
 
+Add more tests
+Replace assert with testify's
 Add a 'Context' with an API to track Mappings/Matching statuses
 Sort mappings based on their cost (regex/jsonPath cost more than an exact match for example)
+Display differences when no match is found
 Add uniqueid and date to each request
 Add delay option to response (normal distribution)
+Replace fiber's default JSON serialization with oj
 Add more tests
-Display differences when no match is found
 Improve/refactor validation
 Possibly remove ignite dependency
 Performance tests

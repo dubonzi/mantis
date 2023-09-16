@@ -50,7 +50,7 @@ func TestAddValidScenarios(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		handler := NewScenarioHandler()
+		handler := NewScenarioHandler(nil)
 		t.Run(tt.name, func(t *testing.T) {
 			for _, m := range tt.input {
 				handler.AddScenario(m)
@@ -127,7 +127,7 @@ func TestValidateScenarios(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		handler := NewScenarioHandler()
+		handler := NewScenarioHandler(nil)
 		t.Run(tt.name, func(t *testing.T) {
 			for _, m := range tt.input {
 				handler.AddScenario(m)
@@ -140,6 +140,60 @@ func TestValidateScenarios(t *testing.T) {
 	}
 
 }
+
+// func TestScenarioMatching(t *testing.T) {
+// 	type scenarioCase struct {
+// 		request  Request
+// 		expected MatchResult
+// 	}
+
+// 	tests := []struct {
+// 		name     string
+// 		mappings []Mapping
+// 		cases    []scenarioCase
+// 	}{
+// 		{
+// 			name:     "should follow state progression",
+// 			mappings: validScenarios["firstScenario"],
+// 			cases: []scenarioCase{
+// 				{
+// 					request:  Request{Method: "DELETE", Path: "/scenario/123"},
+// 					expected: MatchResult{StatusCode: 204, Matched: true},
+// 				},
+// 				{
+// 					request:  Request{Method: "DELETE", Path: "/scenario/123"},
+// 					expected: MatchResult{StatusCode: 404, Matched: true},
+// 				},
+// 				{
+// 					request:  Request{Method: "GET", Path: "/scenario/123"},
+// 					expected: MatchResult{StatusCode: 404, Matched: true},
+// 				},
+// 			},
+// 		},
+// 	}
+
+// 	for _, tt := range tests {
+// 		handler := NewScenarioHandler()
+// 		mappings := make(Mappings)
+// 		for _, m := range tt.mappings {
+// 			handler.AddScenario(m)
+// 			mappings.Put(m)
+// 		}
+
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			err := handler.ValidateScenarioStates()
+// 			require.NoError(t, err)
+
+// 			matcher := NewMatcher(NewRegexCache(), NewJSONPathCache(), handler)
+// 			for _, c := range tt.cases {
+// 				matched, ok, _ := matcher.Match(c.request, mappings)
+// 				got := NewMatchResult(&matched, c.request, ok, false)
+// 				assert.True(t, ok)
+// 				assert.Equal(t, c.expected, got)
+// 			}
+// 		})
+// 	}
+// }
 
 func getMappingsMap(mappings []Mapping) map[string]Mapping {
 	res := make(map[string]Mapping)

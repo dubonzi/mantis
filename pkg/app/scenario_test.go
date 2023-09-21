@@ -84,7 +84,7 @@ func TestValidateScenarios(t *testing.T) {
 			want: ScenarioValidationErrors{
 				{
 					ScenarioName: "Multiple Start",
-					Message:      "the scenario has multiple starting states defined: [First, Second]",
+					Message:      "the scenario has multiple starting states defined",
 				},
 			},
 		},

@@ -2,13 +2,12 @@ package app
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/ohler55/ojg/oj"
 )
 
 const (
-	ScenarioMultipleStartingStateMessage = "the scenario has multiple starting states defined: [%s]"
+	ScenarioMultipleStartingStateMessage = "the scenario has multiple starting states defined"
 	ScenarioNoStartingStateMessage       = "the scenario has no starting state defined"
 	ScenarioInvalidStateNameMessage      = "the scenario has a state pointing to a new state that is not defined in the scenario: [%s -> %s]"
 	ScenarioSingleStateMessage           = "the scenario must have at least 2 defined states"
@@ -120,7 +119,7 @@ func (hand *ScenarioHandler) ValidateScenarioStates() error {
 		}
 
 		if len(startingStates) > 1 {
-			errors = append(errors, ScenarioValidationError{k, fmt.Sprintf(ScenarioMultipleStartingStateMessage, strings.Join(startingStates, ", "))})
+			errors = append(errors, ScenarioValidationError{k, ScenarioMultipleStartingStateMessage})
 		}
 
 		if len(v.States) <= 1 {

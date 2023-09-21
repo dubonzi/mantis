@@ -4,7 +4,6 @@ README
 -- v1.0? --
 
 Add more tests
-Replace assert with testify's
 Add a 'Context' with an API to track Mappings/Matching statuses
 Sort mappings based on their cost (regex/jsonPath cost more than an exact match for example)
 Display differences when no match is found

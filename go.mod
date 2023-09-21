@@ -6,7 +6,6 @@ require (
 	github.com/americanas-go/config v1.8.4
 	github.com/americanas-go/ignite v1.13.1
 	github.com/americanas-go/log v1.8.8
-	github.com/go-playground/assert/v2 v2.2.0
 	github.com/gofiber/fiber/v2 v2.49.2
 	github.com/ohler55/ojg v1.19.3
 	github.com/pkg/errors v0.9.1

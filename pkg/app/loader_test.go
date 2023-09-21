@@ -232,12 +232,12 @@ func TestLoadMappings(t *testing.T) {
 						t.Log("did not expect an error, but got: ", err)
 						t.FailNow()
 					}
-					require.Equal(t, err.Error(), tt.wantErr)
+					require.Equal(t, tt.wantErr, err.Error())
 				}
 				return
 			}
 
-			require.Equal(t, mappings, tt.wantMappings)
+			require.Equal(t, tt.wantMappings, mappings)
 		})
 	}
 

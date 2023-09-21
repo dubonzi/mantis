@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-playground/assert/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestJSONPathCache(t *testing.T) {
@@ -31,12 +32,12 @@ func TestJSONPathCache(t *testing.T) {
 		{
 			expressions: []string{`$.person.[a]`},
 			wantErr:     true,
-			wantLen:     1,
+			wantLen:     0,
 		},
 		{
 			expressions: []string{`$.person[?(@.age > 21 && name == 'John')]`},
 			wantErr:     true,
-			wantLen:     1,
+			wantLen:     0,
 		},
 	}
 
@@ -45,14 +46,9 @@ func TestJSONPathCache(t *testing.T) {
 
 			jc := NewJSONPathCache()
 			err := jc.AddExpressions(tt.expressions)
-			if !assert.IsEqual(err != nil, tt.wantErr) {
-				t.Logf("error parsing jsonpath expression: %s , %s", tt.expressions, err)
-				t.FailNow()
-			}
+			require.Equal(t, tt.wantErr, err != nil)
+			assert.Equal(t, tt.wantLen, len(jc.cache))
 
-			if !tt.wantErr {
-				assert.Equal(t, len(jc.cache), tt.wantLen)
-			}
 		})
 	}
 

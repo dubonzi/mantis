@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-playground/assert/v2"
+	"github.com/stretchr/testify/assert"
 )
 
 type mockDelayer struct {
@@ -66,7 +66,7 @@ func TestService(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			res := service.MatchRequest(tt.request)
-			assert.Equal(t, res, tt.wantResult)
+			assert.Equal(t, tt.wantResult, res)
 			assert.Equal(t, tt.wantDelay, delayer.FixedCalled)
 		})
 	}

@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	"github.com/go-playground/assert/v2"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMatcher(t *testing.T) {
@@ -165,22 +165,15 @@ func TestMatcher(t *testing.T) {
 
 			result := NewMatchResult(&mapping, tt.input, matched, partial)
 
-			if matched != tt.wantMatch {
-				t.Logf("Matching conditions differ: got '%t', want '%t'", matched, tt.wantMatch)
+			if tt.wantMatch {
+				require.Equal(t, tt.wantMatch, matched)
+			}
+			if tt.wantPartial {
+				require.Equal(t, tt.wantPartial, partial)
 			}
 
-			if partial != tt.wantPartial {
-				t.Logf("Partial matching conditions differ: got '%t', want '%t'", matched, tt.wantMatch)
-			}
-
-			if tt.wantMatch && !assert.IsEqual(result, tt.want) {
-				t.Logf("%s doesnt not equal %s", result, tt.want)
-				t.FailNow()
-			}
-
-			if tt.wantPartial && !assert.IsEqual(result, tt.want) {
-				t.Logf("partial match %s doesnt not equal %s", result, tt.want)
-				t.FailNow()
+			if tt.wantMatch || tt.wantPartial {
+				require.Equal(t, tt.want, result)
 			}
 		})
 	}

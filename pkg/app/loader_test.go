@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/americanas-go/config"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -51,6 +52,8 @@ var (
 			},
 			Response: ResponseMapping{StatusCode: 200},
 		},
+	}
+	validScenarioMappings = []Mapping{
 		{
 			Scenario: &ScenarioMapping{
 				Name:          "My Scenario",
@@ -85,11 +88,14 @@ var (
 func TestGetMappings(t *testing.T) {
 	wantMappings := make(Mappings)
 	_ = wantMappings.PutAll(validLoaderMappings)
+	wantScenarioMappings := make(Mappings)
+	_ = wantScenarioMappings.PutAll(validScenarioMappings)
 
 	tests := []struct {
-		name         string
-		before       func(t *testing.T)
-		wantMappings Mappings
+		name                 string
+		before               func(t *testing.T)
+		wantMappings         Mappings
+		wantScenarioMappings Mappings
 	}{
 		{
 			name: "Should return mappings",
@@ -98,7 +104,8 @@ func TestGetMappings(t *testing.T) {
 				t.Setenv("LOADER_PATH_RESPONSE", "testdata/load/valid/response")
 				config.Load()
 			},
-			wantMappings: wantMappings,
+			wantMappings:         wantMappings,
+			wantScenarioMappings: wantScenarioMappings,
 		},
 		{
 			name: "Should return empty mappings if path is not found",
@@ -107,23 +114,26 @@ func TestGetMappings(t *testing.T) {
 				t.Setenv("LOADER_PATH_RESPONSE", "")
 				config.Load()
 			},
-			wantMappings: make(Mappings),
+			wantMappings:         make(Mappings),
+			wantScenarioMappings: make(Mappings),
 		},
 	}
-
-	loader := NewLoader(NewRegexCache(), NewJSONPathCache(), NewScenarioHandler(nil))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.before(t)
 
-			mappings, err := loader.GetMappings()
+			scHandler := NewScenarioHandler(nil)
+			loader := NewLoader(NewRegexCache(), NewJSONPathCache(), scHandler)
+
+			gotMappings, err := loader.GetMappings()
 			if err != nil {
 				t.Log("did not expect an error, but got: ", err)
 				t.FailNow()
 			}
 
-			require.Equal(t, mappings, tt.wantMappings)
+			assert.Equal(t, tt.wantMappings, gotMappings)
+			assert.Equal(t, tt.wantScenarioMappings, scHandler.scenarioMappings)
 		})
 	}
 }
@@ -174,12 +184,11 @@ func TestDecodeFile(t *testing.T) {
 						t.Log("did not expect an error, but got: ", err)
 						t.FailNow()
 					}
-					require.Equal(t, err.Error(), tt.wantErr.Error())
+					require.Equal(t, tt.wantErr.Error(), err.Error())
 				}
-				return
 			}
 
-			require.Equal(t, mapping, tt.wantMapping)
+			require.Equal(t, tt.wantMapping, mapping)
 		})
 	}
 }

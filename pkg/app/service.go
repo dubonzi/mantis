@@ -75,7 +75,7 @@ func (s *Service) MatchRequest(r Request) MatchResult {
 
 	mapping, matched, partial = s.scenarioHandler.MatchScenario(r)
 	if !matched {
-		mapping, matched, partial = s.matcher.Match(r, s.mappings)
+		mapping, matched, partial = s.matcher.Match(r, s.mappings, nil)
 	}
 
 	result := NewMatchResult(&mapping, r, matched, partial)

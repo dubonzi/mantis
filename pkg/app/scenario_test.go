@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -141,59 +142,81 @@ func TestValidateScenarios(t *testing.T) {
 
 }
 
-// func TestScenarioMatching(t *testing.T) {
-// 	type scenarioCase struct {
-// 		request  Request
-// 		expected MatchResult
-// 	}
+func TestScenarioMatching(t *testing.T) {
+	type scenarioCase struct {
+		request  Request
+		expected MatchResult
+	}
 
-// 	tests := []struct {
-// 		name     string
-// 		mappings []Mapping
-// 		cases    []scenarioCase
-// 	}{
-// 		{
-// 			name:     "should follow state progression",
-// 			mappings: validScenarios["firstScenario"],
-// 			cases: []scenarioCase{
-// 				{
-// 					request:  Request{Method: "DELETE", Path: "/scenario/123"},
-// 					expected: MatchResult{StatusCode: 204, Matched: true},
-// 				},
-// 				{
-// 					request:  Request{Method: "DELETE", Path: "/scenario/123"},
-// 					expected: MatchResult{StatusCode: 404, Matched: true},
-// 				},
-// 				{
-// 					request:  Request{Method: "GET", Path: "/scenario/123"},
-// 					expected: MatchResult{StatusCode: 404, Matched: true},
-// 				},
-// 			},
-// 		},
-// 	}
+	tests := []struct {
+		name     string
+		mappings []Mapping
+		cases    []scenarioCase
+	}{
+		{
+			name:     "should follow state progression for first scenario",
+			mappings: validScenarios["firstScenario"],
+			cases: []scenarioCase{
+				{
+					request:  Request{Method: "DELETE", Path: "/scenario/123"},
+					expected: MatchResult{StatusCode: 204, Matched: true},
+				},
+				{
+					request:  Request{Method: "DELETE", Path: "/scenario/123"},
+					expected: MatchResult{StatusCode: 404, Matched: true},
+				},
+				{
+					request:  Request{Method: "GET", Path: "/scenario/123"},
+					expected: MatchResult{StatusCode: 404, Matched: true},
+				},
+			},
+		},
+		{
+			name:     "should follow state progression for second scenario",
+			mappings: validScenarios["secondScenario"],
+			cases: []scenarioCase{
+				{
+					request: Request{Method: "GET", Path: "/objects/123"},
+					expected: MatchResult{
+						StatusCode: 404,
+						Matched:    false,
+						Body:       NotFoundResponse{Message: "No mapping found for the request", Request: Request{Path: "/objects/123", Method: "GET"}},
+					},
+				},
+				{
+					request:  Request{Method: "POST", Path: "/objects"},
+					expected: MatchResult{StatusCode: 201, Headers: map[string]string{"Location": "/objects/123"}, Matched: true},
+				},
+				{
+					request:  Request{Method: "GET", Path: "/objects/123"},
+					expected: MatchResult{StatusCode: 200, Body: "{\"id\": 123}", Matched: true},
+				},
+			},
+		},
+	}
 
-// 	for _, tt := range tests {
-// 		handler := NewScenarioHandler()
-// 		mappings := make(Mappings)
-// 		for _, m := range tt.mappings {
-// 			handler.AddScenario(m)
-// 			mappings.Put(m)
-// 		}
+	for _, tt := range tests {
+		matcher := NewMatcher(NewRegexCache(), NewJSONPathCache())
+		handler := NewScenarioHandler(matcher)
+		for _, m := range tt.mappings {
+			handler.AddScenario(m)
+		}
 
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			err := handler.ValidateScenarioStates()
-// 			require.NoError(t, err)
+		t.Run(tt.name, func(t *testing.T) {
+			err := handler.ValidateScenarioStates()
+			require.NoError(t, err)
 
-// 			matcher := NewMatcher(NewRegexCache(), NewJSONPathCache(), handler)
-// 			for _, c := range tt.cases {
-// 				matched, ok, _ := matcher.Match(c.request, mappings)
-// 				got := NewMatchResult(&matched, c.request, ok, false)
-// 				assert.True(t, ok)
-// 				assert.Equal(t, c.expected, got)
-// 			}
-// 		})
-// 	}
-// }
+			for i, c := range tt.cases {
+				t.Run(fmt.Sprintf("%d", i+1), func(t *testing.T) {
+					mapping, matched, partial := handler.MatchScenario(c.request)
+					got := NewMatchResult(&mapping, c.request, matched, partial)
+					assert.Equal(t, c.expected.Matched, matched)
+					assert.Equal(t, c.expected, got)
+				})
+			}
+		})
+	}
+}
 
 func getMappingsMap(mappings []Mapping) map[string]Mapping {
 	res := make(map[string]Mapping)
@@ -276,7 +299,7 @@ var validScenarios = map[string][]Mapping{
 		{
 			Scenario: &ScenarioMapping{Name: "Second Scenario", StartingState: true, State: "Create Object", NewState: "Object Created"},
 			Request:  RequestMapping{Method: "POST", Path: CommonMatch{Exact: "/objects"}},
-			Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"Location": "123"}},
+			Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"Location": "/objects/123"}},
 			MaxScore: 1,
 		}, {
 			Scenario: &ScenarioMapping{Name: "Second Scenario", State: "Object Created"},

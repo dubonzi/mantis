@@ -16,7 +16,7 @@ func NewMatcher(r *RegexCache, j *JSONPathCache) *Matcher {
 	}
 }
 
-func (matcher *Matcher) Match(r Request, mappings Mappings) (mapping Mapping, matched bool, partial bool) {
+func (matcher *Matcher) Match(r Request, mappings Mappings, scenarioStates map[string]ScenarioState) (Mapping, bool, bool) {
 	methodMappings, ok := mappings[r.Method]
 	if !ok {
 		return Mapping{}, false, false
@@ -40,6 +40,12 @@ func (matcher *Matcher) Match(r Request, mappings Mappings) (mapping Mapping, ma
 		}
 
 		if score == mapping.MaxScore {
+			if mapping.Scenario != nil {
+				sc := scenarioStates[mapping.Scenario.Name]
+				if sc.CurrentState != mapping.Scenario.State {
+					continue
+				}
+			}
 			return mapping, true, false
 		}
 

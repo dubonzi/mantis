@@ -72,7 +72,7 @@ func (hand *ScenarioHandler) AddScenario(mapping Mapping) {
 }
 
 func (hand *ScenarioHandler) MatchScenario(request Request) (Mapping, bool, bool) {
-	mapping, matched, partial := hand.matcher.Match(request, hand.scenarioMappings)
+	mapping, matched, partial := hand.matcher.Match(request, hand.scenarioMappings, hand.scenarios)
 	if !matched || partial {
 		return Mapping{}, false, false
 	}

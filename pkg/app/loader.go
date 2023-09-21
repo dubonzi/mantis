@@ -3,7 +3,7 @@ package app
 import (
 	"encoding/json"
 	"io/fs"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 
@@ -21,20 +21,21 @@ func FileNotFound(path string) error {
 }
 
 type Loader struct {
-	regexCache    *RegexCache
-	jsonPathCache *JSONPathCache
+	regexCache      *RegexCache
+	jsonPathCache   *JSONPathCache
+	scenarioHandler *ScenarioHandler
 }
 
-func NewLoader(regexCache *RegexCache, jsonPathCache *JSONPathCache) *Loader {
-	return &Loader{regexCache, jsonPathCache}
+func NewLoader(regexCache *RegexCache, jsonPathCache *JSONPathCache, scenarioHandler *ScenarioHandler) *Loader {
+	return &Loader{regexCache, jsonPathCache, scenarioHandler}
 }
 
-func (f *Loader) GetMappings() (Mappings, error) {
+func (loader *Loader) GetMappings() (Mappings, error) {
 	mappingsPath := config.String("loader.path.mapping")
 	responsesPath := config.String("loader.path.response")
 
 	mappings := make(Mappings)
-	err := f.loadMappings(mappingsPath, responsesPath, mappings)
+	err := loader.loadMappings(mappingsPath, responsesPath, mappings)
 	if err != nil {
 		return mappings, err
 	}
@@ -42,39 +43,44 @@ func (f *Loader) GetMappings() (Mappings, error) {
 	return mappings, nil
 }
 
-func (f *Loader) loadMappings(mappingsPath string, responsesPath string, mappings Mappings) error {
+func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, mappings Mappings) error {
 	err := filepath.WalkDir(
 		mappingsPath,
 		func(path string, d fs.DirEntry, err error) error {
 			if d != nil && !d.IsDir() {
 				log.Tracef("reading file '%s'", path)
-				m, err := f.decodeFile(path)
+				mapping, err := loader.decodeFile(path)
 				if err != nil {
 					return err
 				}
 
-				if m.Response.BodyFile != "" {
-					bodyContent, err := loadFile(filepath.Join(responsesPath, m.Response.BodyFile))
+				if mapping.Response.BodyFile != "" {
+					bodyContent, err := loadFile(filepath.Join(responsesPath, mapping.Response.BodyFile))
 					if err != nil {
 						return errors.Wrapf(err, "error loading response body file for mapping file [ %s ]", path)
 					}
-					m.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
+					mapping.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
 				}
 
-				err = f.regexCache.AddFromMapping(&m)
+				err = loader.regexCache.AddFromMapping(mapping)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}
 
-				err = f.jsonPathCache.AddExpressions(m.Request.Body.JsonPath)
+				err = loader.jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
 				if err != nil {
 					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
 				}
 
-				err = mappings.Put(&m)
-				if err != nil {
-					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
+				if mapping.Scenario != nil {
+					loader.scenarioHandler.AddScenario(mapping)
+				} else {
+					err = mappings.Put(mapping)
+					if err != nil {
+						return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
+					}
 				}
+
 			}
 			return nil
 		},
@@ -82,6 +88,11 @@ func (f *Loader) loadMappings(mappingsPath string, responsesPath string, mapping
 
 	if err != nil {
 		return err
+	}
+
+	err = loader.scenarioHandler.ValidateScenarioStates()
+	if err != nil {
+		return errors.Wrapf(err, "invalid scenario states")
 	}
 
 	log.Info("mappings loaded successfully")
@@ -104,7 +115,7 @@ func (*Loader) decodeFile(path string) (Mapping, error) {
 }
 
 func loadFile(path string) ([]byte, error) {
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, FileNotFound(path)

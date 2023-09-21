@@ -3,8 +3,8 @@ package app
 import (
 	"testing"
 
-	"github.com/go-playground/assert/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRequest(t *testing.T) {
@@ -66,7 +66,7 @@ func TestRequest(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			got := RequestFromFiber(tt.input)
-			assert.Equal(t, got, tt.want)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 

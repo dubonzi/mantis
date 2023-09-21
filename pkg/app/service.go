@@ -11,8 +11,10 @@ const (
 )
 
 type Service struct {
-	matcher Matcher
-	delayer Delayer
+	matcher         *Matcher
+	scenarioHandler *ScenarioHandler
+	delayer         Delayer
+	mappings        Mappings
 }
 
 type MatchResult struct {
@@ -22,20 +24,20 @@ type MatchResult struct {
 	Matched    bool
 }
 
-func NewMatchResult(mapping *Mapping, r Request, matched bool) MatchResult {
+func NewMatchResult(mapping *Mapping, r Request, matched bool, partial bool) MatchResult {
 	result := MatchResult{
 		Matched: matched,
 	}
 
-	if mapping == nil {
+	if partial {
+		result.Body = buildNotFoundResponse(r, &mapping.Request)
 		result.StatusCode = http.StatusNotFound
-		result.Body = buildNotFoundResponse(r, nil)
 		return result
 	}
 
 	if !matched {
-		result.Body = buildNotFoundResponse(r, &mapping.Request)
 		result.StatusCode = http.StatusNotFound
+		result.Body = buildNotFoundResponse(r, nil)
 		return result
 	}
 
@@ -58,14 +60,25 @@ type NotFoundResponse struct {
 	ClosestMapping *RequestMapping `json:"closestMapping,omitempty"`
 }
 
-func NewService(matcher Matcher, delayer Delayer) *Service {
-	return &Service{matcher, delayer}
+func NewService(mappings Mappings, matcher *Matcher, scenarioHandler *ScenarioHandler, delayer Delayer) *Service {
+	return &Service{
+		matcher:         matcher,
+		scenarioHandler: scenarioHandler,
+		delayer:         delayer,
+		mappings:        mappings,
+	}
 }
 
 func (s *Service) MatchRequest(r Request) MatchResult {
-	mapping, matched := s.matcher.Match(r)
+	var mapping Mapping
+	var matched, partial bool
 
-	result := NewMatchResult(mapping, r, matched)
+	mapping, matched, partial = s.scenarioHandler.MatchScenario(r)
+	if !matched {
+		mapping, matched, partial = s.matcher.Match(r, s.mappings, nil)
+	}
+
+	result := NewMatchResult(&mapping, r, matched, partial)
 
 	if matched {
 		s.delayer.Apply(&mapping.Response.ResponseDelay)

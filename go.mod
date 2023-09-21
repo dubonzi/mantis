@@ -6,10 +6,10 @@ require (
 	github.com/americanas-go/config v1.8.4
 	github.com/americanas-go/ignite v1.13.1
 	github.com/americanas-go/log v1.8.8
-	github.com/go-playground/assert/v2 v2.2.0
 	github.com/gofiber/fiber/v2 v2.49.2
 	github.com/ohler55/ojg v1.19.3
 	github.com/pkg/errors v0.9.1
+	github.com/stretchr/testify v1.8.4
 	go.uber.org/fx v1.20.0
 )
 
@@ -18,6 +18,7 @@ require (
 	github.com/americanas-go/rest-response v1.0.7 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -38,6 +39,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

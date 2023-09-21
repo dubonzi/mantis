@@ -1,0 +1,26 @@
+{
+  "scenario": {
+    "name": "My Scenario",
+    "state": "Second state"
+  },
+  "request": {
+    "method": "POST",
+    "path": {
+      "exact": "/scenario"
+    },
+    "body": {
+      "contains": [
+        "scenario",
+        "test"
+      ]
+    },
+    "headers": {
+      "content-type": {
+        "exact": "application/json"
+      }
+    }
+  },
+  "response": {
+    "statusCode": 400
+  }
+}

@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/americanas-go/config"
-	"github.com/go-playground/assert/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
-	validLoaderMappings = []*Mapping{
+	validLoaderMappings = []Mapping{
 		{
 			Request: RequestMapping{
 				Method: "GET",
@@ -52,16 +53,49 @@ var (
 			Response: ResponseMapping{StatusCode: 200},
 		},
 	}
+	validScenarioMappings = []Mapping{
+		{
+			Scenario: &ScenarioMapping{
+				Name:          "My Scenario",
+				StartingState: true,
+				State:         "First state",
+				NewState:      "Second state",
+			},
+			Request: RequestMapping{
+				Method:  "POST",
+				Path:    CommonMatch{Exact: "/scenario"},
+				Headers: map[string]CommonMatch{"content-type": {Exact: "application/json"}},
+				Body:    BodyMatch{CommonMatch: CommonMatch{Contains: []string{"scenario", "test"}}},
+			},
+			Response: ResponseMapping{StatusCode: 200},
+		},
+		{
+			Scenario: &ScenarioMapping{
+				Name:  "My Scenario",
+				State: "Second state",
+			},
+			Request: RequestMapping{
+				Method:  "POST",
+				Path:    CommonMatch{Exact: "/scenario"},
+				Headers: map[string]CommonMatch{"content-type": {Exact: "application/json"}},
+				Body:    BodyMatch{CommonMatch: CommonMatch{Contains: []string{"scenario", "test"}}},
+			},
+			Response: ResponseMapping{StatusCode: 400},
+		},
+	}
 )
 
 func TestGetMappings(t *testing.T) {
 	wantMappings := make(Mappings)
 	_ = wantMappings.PutAll(validLoaderMappings)
+	wantScenarioMappings := make(Mappings)
+	_ = wantScenarioMappings.PutAll(validScenarioMappings)
 
 	tests := []struct {
-		name         string
-		before       func(t *testing.T)
-		wantMappings Mappings
+		name                 string
+		before               func(t *testing.T)
+		wantMappings         Mappings
+		wantScenarioMappings Mappings
 	}{
 		{
 			name: "Should return mappings",
@@ -70,7 +104,8 @@ func TestGetMappings(t *testing.T) {
 				t.Setenv("LOADER_PATH_RESPONSE", "testdata/load/valid/response")
 				config.Load()
 			},
-			wantMappings: wantMappings,
+			wantMappings:         wantMappings,
+			wantScenarioMappings: wantScenarioMappings,
 		},
 		{
 			name: "Should return empty mappings if path is not found",
@@ -79,23 +114,26 @@ func TestGetMappings(t *testing.T) {
 				t.Setenv("LOADER_PATH_RESPONSE", "")
 				config.Load()
 			},
-			wantMappings: make(Mappings),
+			wantMappings:         make(Mappings),
+			wantScenarioMappings: make(Mappings),
 		},
 	}
-
-	loader := NewLoader(NewRegexCache(), NewJSONPathCache())
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.before(t)
 
-			mappings, err := loader.GetMappings()
+			scHandler := NewScenarioHandler(nil)
+			loader := NewLoader(NewRegexCache(), NewJSONPathCache(), scHandler)
+
+			gotMappings, err := loader.GetMappings()
 			if err != nil {
 				t.Log("did not expect an error, but got: ", err)
 				t.FailNow()
 			}
 
-			assert.Equal(t, mappings, tt.wantMappings)
+			assert.Equal(t, tt.wantMappings, gotMappings)
+			assert.Equal(t, tt.wantScenarioMappings, scHandler.scenarioMappings)
 		})
 	}
 }
@@ -134,7 +172,7 @@ func TestDecodeFile(t *testing.T) {
 		// TODO: Test to check on the other error path
 	}
 
-	loader := NewLoader(NewRegexCache(), NewJSONPathCache())
+	loader := NewLoader(NewRegexCache(), NewJSONPathCache(), NewScenarioHandler(nil))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -146,12 +184,11 @@ func TestDecodeFile(t *testing.T) {
 						t.Log("did not expect an error, but got: ", err)
 						t.FailNow()
 					}
-					assert.Equal(t, err.Error(), tt.wantErr.Error())
+					require.Equal(t, tt.wantErr.Error(), err.Error())
 				}
-				return
 			}
 
-			assert.Equal(t, mapping, tt.wantMapping)
+			require.Equal(t, tt.wantMapping, mapping)
 		})
 	}
 }
@@ -181,7 +218,7 @@ func TestLoadMappings(t *testing.T) {
 		},
 	}
 
-	loader := NewLoader(NewRegexCache(), NewJSONPathCache())
+	loader := NewLoader(NewRegexCache(), NewJSONPathCache(), NewScenarioHandler(nil))
 
 	mappings := make(Mappings)
 
@@ -195,12 +232,12 @@ func TestLoadMappings(t *testing.T) {
 						t.Log("did not expect an error, but got: ", err)
 						t.FailNow()
 					}
-					assert.Equal(t, err.Error(), tt.wantErr)
+					require.Equal(t, tt.wantErr, err.Error())
 				}
 				return
 			}
 
-			assert.Equal(t, mappings, tt.wantMappings)
+			require.Equal(t, tt.wantMappings, mappings)
 		})
 	}
 

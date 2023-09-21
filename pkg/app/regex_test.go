@@ -3,7 +3,8 @@ package app
 import (
 	"testing"
 
-	"github.com/go-playground/assert/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRegexCache(t *testing.T) {
@@ -63,12 +64,9 @@ func TestRegexCache(t *testing.T) {
 
 	for _, tt := range tests {
 		rc := NewRegexCache()
-		err := rc.AddFromMapping(&tt.mapping)
-		if !assert.IsEqual(err != nil, tt.wantErr) {
-			t.Log("error parsing regex pattern: ", err)
-			t.Fail()
-		}
+		err := rc.AddFromMapping(tt.mapping)
 
+		require.Equal(t, tt.wantErr, err != nil)
 		assert.Equal(t, len(rc.cache), tt.wantLen)
 
 		if !tt.wantErr {

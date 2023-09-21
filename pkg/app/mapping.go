@@ -14,14 +14,17 @@ const (
 )
 
 type Mapping struct {
-	Request  RequestMapping  `json:"request"`
-	Response ResponseMapping `json:"response"`
+	Scenario *ScenarioMapping `json:"scenario"`
+	Request  RequestMapping   `json:"request"`
+	Response ResponseMapping  `json:"response"`
 
 	MaxScore int
 	Cost     int
 }
 
-func (m *Mapping) CalcCost() {
+func (m Mapping) CalcMaxScoreAndCost() Mapping { // TODO: Add Score and Cost to tests
+	m.MaxScore = m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
+
 	var cost int
 
 	cost += m.Request.Path.Cost() + m.Request.Body.Cost()
@@ -31,19 +34,22 @@ func (m *Mapping) CalcCost() {
 	}
 
 	m.Cost = cost
+
+	return m
 }
 
-func (m *Mapping) CalcMaxScore() {
-	m.MaxScore = m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
-}
-
-func (m *Mapping) Validate() error {
+func (m Mapping) Validate() error {
 	errs := make(ValidationErrors, 0)
 	if m.Request.Method == "" {
 		errs = append(errs, ValidationError{"Request.Method", "Method is required"})
 	}
+
 	if !m.Request.HasPath() {
 		errs = append(errs, ValidationError{"Request.Path", "Path mapping is required"})
+	}
+
+	if m.Scenario != nil {
+		errs = append(errs, m.Scenario.Validate()...)
 	}
 
 	if len(errs) > 0 {
@@ -53,23 +59,22 @@ func (m *Mapping) Validate() error {
 	return nil
 }
 
-type Mappings map[string][]*Mapping
+type Mappings map[string][]Mapping
 
-func (m Mappings) Put(mapping *Mapping) error {
+func (m Mappings) Put(mapping Mapping) error {
 	if err := mapping.Validate(); err != nil {
 		return err
 	}
 
 	log.Tracef("adding mapping: %+v", mapping)
 
-	mapping.CalcMaxScore()
-	mapping.CalcCost()
+	mapping = mapping.CalcMaxScoreAndCost()
 
 	m[mapping.Request.Method] = append(m[mapping.Request.Method], mapping)
 	return nil
 }
 
-func (m Mappings) PutAll(mappings []*Mapping) error {
+func (m Mappings) PutAll(mappings []Mapping) error {
 	for _, mapping := range mappings {
 		err := m.Put(mapping)
 		if err != nil {
@@ -134,6 +139,25 @@ func (m RequestMapping) BodyScore() int {
 		return 1
 	}
 	return len(m.Body.JsonPath) + len(m.Body.Contains) + len(m.Body.Patterns)
+}
+
+type ScenarioMapping struct {
+	Name          string `json:"name"`
+	StartingState bool   `json:"startingState"`
+	State         string `json:"state"`
+	NewState      string `json:"newState"`
+}
+
+func (s *ScenarioMapping) Validate() ValidationErrors {
+	errs := make(ValidationErrors, 0)
+	if s.Name == "" {
+		errs = append(errs, ValidationError{"Scenario.Name", "Scenario name is required"})
+	}
+	if s.State == "" {
+		errs = append(errs, ValidationError{"Scenario.State", "Scenario state is required"})
+	}
+
+	return errs
 }
 
 type ResponseMapping struct {

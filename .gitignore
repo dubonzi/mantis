@@ -4,3 +4,4 @@ configs/
 files/
 
 *.out
+dist/

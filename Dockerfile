@@ -1,17 +1,8 @@
 #TODO: Add build make command with ldflags for version
-FROM golang:alpine AS build
+FROM alpine
 
-WORKDIR /app
+RUN mkdir /app
 
-COPY . .
-
-RUN go build -o mantis cmd/*.go
-
-
-FROM alpine AS app
-
-WORKDIR /app
-
-COPY --from=build /app/mantis .
+COPY ./dist/mantis /app
 
 CMD [ "/app/mantis" ]

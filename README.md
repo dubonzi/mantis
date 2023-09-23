@@ -1,7 +1,7 @@
 # Mantis
 
-<div style="">
-  <img src="docs/img/logo.svg" width="220" style="display:block; margin: 0 auto;">
+<div align="center">
+  <img src="docs/img/logo.svg" width="220">
 </div>
 
 ## About

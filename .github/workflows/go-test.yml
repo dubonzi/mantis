@@ -13,8 +13,8 @@ jobs:
     steps:
       - id: go-cache-paths
         run: |
-          echo "::set-output name=go-build::$(go env GOCACHE)"
-          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+          echo "go-build=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+          echo "go-mod=$(go env GOMODCACHE)" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v3
 
@@ -38,5 +38,8 @@ jobs:
       - name: Build
         run: go build -v ./...
 
-      - name: Test
-        run: go test -race -v -count=1 -shuffle=on ./...
+      - name: Test/Cover
+        run: make cover-ci
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4-beta

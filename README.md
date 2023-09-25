@@ -10,7 +10,8 @@
 
  <div align="center">
 
- [![Go](https://github.com/dubonzi/mantis/actions/workflows/go-test.yml/badge.svg)](https://github.com/dubonzi/mantis/actions/workflows/go-test.yml)
+ [![Go](https://github.com/dubonzi/mantis/actions/workflows/go-test.yml/badge.svg)](https://github.com/dubonzi/mantis/actions/workflows/go-test.yml) 
+ [![codecov](https://codecov.io/gh/dubonzi/mantis/graph/badge.svg?token=OJ97WK5VJJ)](https://codecov.io/gh/dubonzi/mantis)
 
  </div>
 

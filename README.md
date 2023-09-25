@@ -6,7 +6,7 @@
 
 ## About
 
- [![Go](https://github.com/dubonzi/mantis/actions/workflows/go.yml/badge.svg)](https://github.com/dubonzi/mantis/actions/workflows/go.yml)
+ [![Go](https://github.com/dubonzi/mantis/actions/workflows/go.yml/badge.svg)](https://github.com/dubonzi/mantis/actions/workflows/go-test.yml)
 
 Mantis is a REST API mocking tool and service, enabling you to mock any type of request, which makes development and running tests easier by not having to call a real service your app depends on. It is inspired by Wiremock and inherits some features to it.
 
@@ -27,6 +27,16 @@ As of now, Mantis has all of the core features needed to be used in almost any s
 
 ## Running It
 
-To run Mantis, you can either define a Dockerfile and use ``(ADD IMAGE)
+To run Mantis, you can either define a Dockerfile and use `ghcr.io/dubonzi/mantis:latest` as your base image or download the executable from `https://github.com/dubonzi/mantis/releases`.
 
-Mantis works by reading `Mapping` definitions which are JSON files containing information about the request you want mock such as 
+Mantis works by reading `Mapping` definitions which are JSON files containing information about the request you want mock such as HTTP Method, URL and other attributes, and also the corresponding response for that request. 
+
+You can save the body of a response for a request on a separate JSON file and refer to it in your mapping as well.
+
+The default base paths Mantis reads mappings and responses files from is `files/mappings` and `files/responses`. You can freely add subfolders and also configure these base paths. If running on Docker, don't forget to copy your definitions into the image when building.
+
+The full documentation with examples can be found here (TODO).
+
+## Credits
+
+Thanks [Myond](https://instagram.com/bymyond) for the logo and images!

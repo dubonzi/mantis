@@ -1,0 +1,17 @@
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: "./cmd/"
+    id: "mantis"
+    binary: mantis
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    ldflags:
+      - -s -w
+    goarch:
+      - amd64
+    no_unique_dist_dir: true

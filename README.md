@@ -1,12 +1,21 @@
 # Mantis
 
 <div align="center">
-  <img src="docs/img/logo.svg" width="220">
+  <img src="docs/img/logo.svg" width="190">
+  <br/>
+  <img src="docs/img/name.svg" width="220">
 </div>
 
-## About
+<br/> 
 
- [![Go](https://github.com/dubonzi/mantis/actions/workflows/go.yml/badge.svg)](https://github.com/dubonzi/mantis/actions/workflows/go-test.yml)
+ <div align="center">
+
+ [![Go](https://github.com/dubonzi/mantis/actions/workflows/go-test.yml/badge.svg)](https://github.com/dubonzi/mantis/actions/workflows/go-test.yml)
+
+ </div>
+
+
+## About
 
 Mantis is a REST API mocking tool and service, enabling you to mock any type of request, which makes development and running tests easier by not having to call a real service your app depends on. It is inspired by Wiremock and inherits some features to it.
 

@@ -1,9 +1,9 @@
 # Mantis
 
 <div align="center">
-  <img src="docs/img/logo.svg" width="190">
+  <img src="docs/docs/img/logo.svg" width="190">
   <br/>
-  <img src="docs/img/name.svg" width="220">
+  <img src="docs/docs/img/name.svg" width="220">
 </div>
 
 <br/> 
@@ -18,7 +18,7 @@
 
 ## About
 
-Mantis is a REST API mocking tool and service, enabling you to mock any type of request, which makes development and running tests easier by not having to call a real service your app depends on. It is inspired by Wiremock and inherits some features to it.
+Mantis is a REST API mocking tool, enabling you to mock any type of request, which makes development and running tests easier by not having to call a real service your app depends on. It is inspired by Wiremock and inherits some features to it.
 
 I had the idea for Mantis when running a stress test at work using Wiremock to mock responses from various dependencies and realising it wasn't performing well and used too much resources to handle the throughput needed for the test.
 

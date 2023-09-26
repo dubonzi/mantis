@@ -28,7 +28,6 @@ theme:
   logo: img/favicon.ico
   favicon: img/favicon.ico
   features:
-    - navigation.sections
     - toc.follow
   palette:
     - scheme: slate

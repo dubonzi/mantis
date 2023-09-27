@@ -119,6 +119,7 @@ func TestMatcher(t *testing.T) {
 			want: MatchResult{
 				Matched:    false,
 				StatusCode: 404,
+				Headers:    map[string]string{"Content-type": "application/json"},
 				Body: NotFoundResponse{
 					Message:        NoMappingFoundMessage,
 					Request:        Request{Method: "GET", Path: "/nomatchhere"},
@@ -134,6 +135,7 @@ func TestMatcher(t *testing.T) {
 			want: MatchResult{
 				Matched:    false,
 				StatusCode: 404,
+				Headers:    map[string]string{"Content-type": "application/json"},
 				Body: NotFoundResponse{
 					Message: NoMappingFoundMessage,
 					Request: Request{Method: "GET", Path: "/bears/321"},

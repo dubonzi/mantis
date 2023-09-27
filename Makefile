@@ -1,7 +1,7 @@
 @PHONY: dev, tests, cover, cover-ci, serve-docs, testsum, testwatch
 
 dev:
-	go run -race cmd/*.go --conf=configs/base.yaml
+	go run -race cmd/*.go
 
 tests: 
 	go test -race -v -count=1 -shuffle=on ./...

@@ -2,7 +2,26 @@
 
 The request object contains conditions about the request you want to match.
 
-To match a request with a mapping, Mantis looks at each condition defined in the mapping and will only match it if all of them are true. Note that for any request component, only one type of condition can be used, that means you can't mix `exact` and `contains` to match the `path`.
+```json
+"request": {
+  "method": "POST",
+  "path": {
+    "contains": ["product"],
+  },
+  "headers": {
+    "Content-type": {
+      "exact": "application/json"
+    },
+  },
+  "body": {
+    "jsonPath": ["$[?(@.name == 'product')]"]
+  }
+}
+```
+
+To match a request with a mapping, Mantis looks at each condition defined in the mapping, along with the method, and will only match it if all of them are true. Note that for any request component, only one type of condition can be used, that means you can't mix `exact` and `contains` to match the `path`, for example.
+
+> The method and at least one path condition are required
 
 The supported conditions are:
 

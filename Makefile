@@ -1,3 +1,5 @@
+@PHONY: dev, tests, cover, cover-ci, serve-docs, testsum, testwatch
+
 dev:
 	go run -race cmd/*.go --conf=configs/base.yaml
 
@@ -10,7 +12,11 @@ cover:
 cover-ci:
 	go test -race -coverprofile=coverage.out -count=1 -shuffle=on ./...
 
-#Requires gotestsum (https://github.com/gotestyourself/gotestsum)
+# Docs
+serve-docs:
+	mkdocs serve -f docs/mkdocs.yml
+
+# Requires gotestsum (https://github.com/gotestyourself/gotestsum)
 testsum:
 	gotestsum --packages="./..." -- -count=1 -race -cover -shuffle=on
 

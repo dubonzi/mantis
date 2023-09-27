@@ -17,6 +17,10 @@
     <img class="badge-item" src="https://codecov.io/gh/dubonzi/mantis/graph/badge.svg?token=OJ97WK5VJJ"/>
   </a>
 
+  <a target="_blank" href="https://dubonzi.github.io/mantis">
+    <img class="badge-item" src="https://img.shields.io/badge/Docs-%F0%9F%93%9A-azure"/>
+  </a>
+
 </div>
 
 </br>

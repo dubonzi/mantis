@@ -1,4 +1,4 @@
-# Mappings
+# Introduction
 
 Mappings are the definitions Mantis uses to mock the responses to all requests, they contain contain information such as HTTP Method, path, headers, etc..
 
@@ -53,7 +53,7 @@ Here is a complete example of a mapping with all it's fields:
         "pattern": ["json$", "xml$"]
       }
     },
-     "body": {
+    "body": {
       "exact": "{\"code\": \"12345\",\"name\": \"product\"}",
       "contains": ["product", "12345"],
       "pattern": ["\"code\": \"[0-9]+\""],
@@ -77,4 +77,4 @@ Here is a complete example of a mapping with all it's fields:
 }
 ```
 
-As you can see, there are multiple ways of matching a certain component of the request. See [Matching](#matching) below for more information.
+As you can see, there are multiple ways of matching a certain component of the request. See [Request](request.md) for more information.

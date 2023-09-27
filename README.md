@@ -12,6 +12,7 @@
 
  [![Go](https://github.com/dubonzi/mantis/actions/workflows/go-test.yml/badge.svg)](https://github.com/dubonzi/mantis/actions/workflows/go-test.yml) 
  [![codecov](https://codecov.io/gh/dubonzi/mantis/graph/badge.svg?token=OJ97WK5VJJ)](https://codecov.io/gh/dubonzi/mantis)
+[![](https://img.shields.io/badge/Docs-%F0%9F%93%9A-azure)](https://dubonzi.github.io/mantis)
 
  </div>
 
@@ -41,11 +42,9 @@ To run Mantis, you can either define a Dockerfile and use `ghcr.io/dubonzi/manti
 
 Mantis works by reading `Mapping` definitions which are JSON files containing information about the request you want mock such as HTTP Method, URL and other attributes, and also the corresponding response for that request. 
 
-You can save the body of a response for a request on a separate JSON file and refer to it in your mapping as well.
+The default base paths Mantis reads mappings and responses files from is `files/mappings` and `files/responses` respectively. You can freely add subfolders and also configure these base paths. If running on Docker, don't forget to copy your definition files into the image when building.
 
-The default base paths Mantis reads mappings and responses files from is `files/mappings` and `files/responses`. You can freely add subfolders and also configure these base paths. If running on Docker, don't forget to copy your definitions into the image when building.
-
-The full documentation with examples can be found here (TODO).
+The full documentation can be found [here](https://dubonzi.github.io/mantis). There's also an [example repository](https://github.com/dubonzi/mantis-example).
 
 ## Credits
 

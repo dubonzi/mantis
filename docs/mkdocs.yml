@@ -8,16 +8,16 @@ site_dir: build
 
 repo_name: Mantis
 repo_url: https://github.com/dubonzi/mantis.git
-      
+
 nav:
   - index.md
   - Running: running.md
-  - Config: config.md
-  - Mappings: 
-    - Intro: mappings/mappings.md
-    - Request: mappings/request.md
-    - Response: mappings/response.md
-    - Scenarios: mappings/scenarios.md
+  - Configuration: config.md
+  - Mappings:
+      - Introduction: mappings/intro.md
+      - Request: mappings/request.md
+      - Response: mappings/response.md
+      - Scenarios: mappings/scenarios.md
 
 extra_css:
   - assets/css/styles.css
@@ -39,14 +39,14 @@ theme:
 
     - scheme: default
       toggle:
-        icon: material/brightness-7 
+        icon: material/brightness-7
         name: Switch to dark mode
       primary: black
       accent: green
 
-markdown_extensions: 
+markdown_extensions:
   - fenced_code
   - codehilite
 
-plugins: 
+plugins:
   - open-in-new-tab

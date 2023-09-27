@@ -66,7 +66,7 @@ func (m Mappings) Put(mapping Mapping) error {
 		return err
 	}
 
-	log.Tracef("adding mapping: %+v", mapping)
+	log.Debugf("adding mapping: %+v", mapping)
 
 	mapping = mapping.CalcMaxScoreAndCost()
 

@@ -48,7 +48,7 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 		mappingsPath,
 		func(path string, d fs.DirEntry, err error) error {
 			if d != nil && !d.IsDir() {
-				log.Tracef("reading file '%s'", path)
+				log.Debugf("reading file '%s'", path)
 				mapping, err := loader.decodeFile(path)
 				if err != nil {
 					return err

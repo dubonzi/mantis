@@ -55,10 +55,14 @@ func (h Handler) All(c *fiber.Ctx) error {
 
 	c.Status(res.StatusCode)
 
-	switch b := res.Body.(type) {
-	case string:
-		return c.SendString(b)
-	default:
-		return c.SendString(oj.JSON(b))
+	if res.Body != nil {
+		switch b := res.Body.(type) {
+		case string:
+			return c.SendString(b)
+		default:
+			return c.SendString(oj.JSON(b))
+		}
 	}
+
+	return c.Send(nil)
 }

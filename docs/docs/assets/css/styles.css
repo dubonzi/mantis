@@ -1,0 +1,10 @@
+.badge {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.badge-item {
+  margin: 0 5px;
+}

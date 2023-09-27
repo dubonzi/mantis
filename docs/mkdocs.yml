@@ -1,0 +1,52 @@
+site_name: Mantis
+site_author: Eduardo Bonzi
+site_url: https://dubonzi.github.io/mantis
+site_description: Mantis is a fast REST API mocking tool
+
+docs_dir: docs
+site_dir: build
+
+repo_name: Mantis
+repo_url: https://github.com/dubonzi/mantis.git
+
+nav:
+  - index.md
+  - Running: running.md
+  - Configuration: config.md
+  - Mappings:
+      - Introduction: mappings/intro.md
+      - Request: mappings/request.md
+      - Response: mappings/response.md
+      - Scenarios: mappings/scenarios.md
+
+extra_css:
+  - assets/css/styles.css
+  - assets/css/code-style.css
+
+theme:
+  name: material
+  logo: img/favicon.ico
+  favicon: img/favicon.ico
+  features:
+    - toc.follow
+  palette:
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+      primary: black
+      accent: green
+
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+      primary: black
+      accent: green
+
+markdown_extensions:
+  - fenced_code
+  - codehilite
+
+plugins:
+  - open-in-new-tab

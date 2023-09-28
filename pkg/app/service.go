@@ -27,17 +27,20 @@ type MatchResult struct {
 func NewMatchResult(mapping *Mapping, r Request, matched bool, partial bool) MatchResult {
 	result := MatchResult{
 		Matched: matched,
+		Headers: make(map[string]string),
 	}
 
 	if partial {
 		result.Body = buildNotFoundResponse(r, &mapping.Request)
 		result.StatusCode = http.StatusNotFound
+		result.Headers["Content-type"] = "application/json"
 		return result
 	}
 
 	if !matched {
 		result.StatusCode = http.StatusNotFound
 		result.Body = buildNotFoundResponse(r, nil)
+		result.Headers["Content-type"] = "application/json"
 		return result
 	}
 

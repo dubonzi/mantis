@@ -180,6 +180,7 @@ func TestScenarioMatching(t *testing.T) {
 					expected: MatchResult{
 						StatusCode: 404,
 						Matched:    false,
+						Headers:    map[string]string{"Content-type": "application/json"},
 						Body:       NotFoundResponse{Message: "No mapping found for the request", Request: Request{Path: "/objects/123", Method: "GET"}},
 					},
 				},

@@ -1,10 +1,16 @@
 package app
 
 import (
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/ohler55/ojg/alt"
+	"github.com/ohler55/ojg/oj"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRequest(t *testing.T) {
@@ -68,6 +74,87 @@ func TestRequest(t *testing.T) {
 			got := RequestFromFiber(tt.input)
 			assert.Equal(t, tt.want, got)
 		})
+	}
+
+}
+
+type mockService struct {
+	mockMatchFunc func(Request) MatchResult
+}
+
+func (m mockService) MatchRequest(r Request) MatchResult {
+	return m.mockMatchFunc(r)
+}
+
+func TestHandleResponse(t *testing.T) {
+
+	tests := []struct {
+		name       string
+		matchFunc  func(Request) MatchResult
+		assertFunc func(*testing.T, *http.Response)
+	}{
+		{
+			name: "Should send not found response",
+			matchFunc: func(r Request) MatchResult {
+				return MatchResult{
+					StatusCode: http.StatusNotFound,
+					Headers:    map[string]string{"Content-type": "application/json"},
+					Body:       buildNotFoundResponse(Request{Path: "/test", Method: "GET"}, nil),
+				}
+			},
+			assertFunc: func(t *testing.T, r *http.Response) {
+				body, err := oj.Load(r.Body)
+				require.NoError(t, err)
+				var nf NotFoundResponse
+				_, err = alt.Recompose(body, &nf)
+				require.NoError(t, err)
+				assert.Equal(t, http.StatusNotFound, r.StatusCode)
+				assert.Equal(t, "application/json", r.Header.Get("Content-type"))
+				assert.Equal(t, buildNotFoundResponse(Request{Path: "/test", Method: "GET", Headers: make(map[string]string)}, nil), nf)
+			},
+		},
+		{
+			name: "Should send non json response",
+			matchFunc: func(r Request) MatchResult {
+				return MatchResult{
+					StatusCode: http.StatusOK,
+					Headers:    map[string]string{"Content-type": "application/xml"},
+					Body:       "<name>Bilbo</name>",
+				}
+			},
+			assertFunc: func(t *testing.T, r *http.Response) {
+				body, err := io.ReadAll(r.Body)
+				require.NoError(t, err)
+				assert.Equal(t, http.StatusOK, r.StatusCode)
+				assert.Equal(t, "application/xml", r.Header.Get("Content-type"))
+				assert.Equal(t, "<name>Bilbo</name>", string(body))
+			},
+		},
+		{
+			name: "Should send response without body",
+			matchFunc: func(r Request) MatchResult {
+				return MatchResult{
+					StatusCode: http.StatusCreated,
+					Headers:    map[string]string{"Location": "/users/123"},
+				}
+			},
+			assertFunc: func(t *testing.T, r *http.Response) {
+				assert.Equal(t, http.StatusCreated, r.StatusCode)
+				assert.Equal(t, "/users/123", r.Header.Get("Location"))
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		app := fiber.New()
+		hand := NewHandler(mockService{tt.matchFunc})
+		app.All("/", hand.All)
+
+		res, err := app.Test(httptest.NewRequest("GET", "/", nil))
+		require.NoError(t, err)
+
+		tt.assertFunc(t, res)
+
 	}
 
 }

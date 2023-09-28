@@ -71,3 +71,11 @@ func TestRequest(t *testing.T) {
 	}
 
 }
+
+func TestHandleResponse(t *testing.T) {
+	tests := []struct {
+		name      string
+		matchFunc func(Request) MatchResult
+		want      func(fiber)
+	}{}
+}

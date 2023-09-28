@@ -8,6 +8,10 @@ import (
 	"github.com/ohler55/ojg/oj"
 )
 
+type ServiceMatcher interface {
+	MatchRequest(Request) MatchResult
+}
+
 type Request struct {
 	Path    string            `json:"path"`
 	Method  string            `json:"method"`
@@ -31,10 +35,10 @@ func RequestFromFiber(r *fiber.Request) Request {
 }
 
 type Handler struct {
-	service *Service
+	service ServiceMatcher
 }
 
-func NewHandler(service *Service) *Handler {
+func NewHandler(service ServiceMatcher) *Handler {
 	return &Handler{service}
 }
 

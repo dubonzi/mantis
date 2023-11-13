@@ -169,7 +169,6 @@ func TestDecodeFile(t *testing.T) {
 			path:    "testdata/decode/invalid_mapping.json",
 			wantErr: errors.New("json: cannot unmarshal bool into Go struct field RequestMapping.request.method of type string"),
 		},
-		// TODO: Test to check on the other error path
 	}
 
 	loader := NewLoader(NewRegexCache(), NewJSONPathCache(), NewScenarioHandler(nil))

@@ -131,5 +131,5 @@ func (hand *ScenarioHandler) ValidateScenarioStates() error {
 		return errors
 	}
 
-	return nil //TODO: state validation
+	return nil
 }

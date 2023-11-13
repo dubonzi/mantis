@@ -1,12 +1,8 @@
-Example repository
-
--- v1.0? --
-
-Add coverage badge
 Add uniqueid and date to each request
-Add more tests
 Add a 'Context' with an API to track Mappings/Matching statuses
 Sort mappings based on their cost (performance - regex/jsonPath cost more than an exact match for example)
+Dynamicaly sort mappings during runtime based on most 'hit' (using the context info from context)?
+Add more tests
 Display differences when no match is found
 Add delay option to response (normal distribution)
 Replace fiber's default JSON serialization with oj (performance)

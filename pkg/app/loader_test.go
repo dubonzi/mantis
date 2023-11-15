@@ -37,6 +37,22 @@ var (
 		},
 		{
 			Request: RequestMapping{
+				Method:  "GET",
+				Path:    CommonMatch{Patterns: []string{"/alpha/[A-Za-z]+"}},
+				Headers: map[string]CommonMatch{"accept": {Patterns: []string{"application/(json|xml){1}", ".*application.*"}}},
+			},
+			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"id": "regex","name": "Regex response"}`},
+		},
+		{
+			Request: RequestMapping{
+				Method:  "GET",
+				Path:    CommonMatch{Patterns: []string{"/search/query/[a-zA-Z0-9]+"}},
+				Headers: map[string]CommonMatch{"accept": {Patterns: []string{"video/(mp4|avi)"}}},
+			},
+			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"id": "regex","name": "Regex response"}`},
+		},
+		{
+			Request: RequestMapping{
 				Method: "PUT",
 				Path:   CommonMatch{Exact: "/json/path"},
 				Body:   BodyMatch{JsonPath: []string{"$[?(@.product.id == '12345')]", "$.person[?(@.age > 21 || @.name == 'John')]"}},
@@ -145,19 +161,19 @@ func TestDecodeFile(t *testing.T) {
 		path        string
 		wantErr     error
 		anyErr      bool
-		wantMapping Mapping
+		wantMapping []Mapping
 	}{
 		{
 			name: "Should decode file successfully",
 			path: "testdata/decode/get_product_12345.json",
-			wantMapping: Mapping{
+			wantMapping: []Mapping{{
 				Request: RequestMapping{
 					Method:  "GET",
 					Path:    CommonMatch{Exact: "/product/12345"},
 					Headers: map[string]CommonMatch{"accept": {Exact: "application/json"}},
 				},
 				Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, BodyFile: "get_product_12345_response.json"},
-			},
+			}},
 		},
 		{
 			name:    "Should return an error if file doesn't exist",

@@ -1,0 +1,51 @@
+[
+  {
+    "request": {
+      "method": "GET",
+      "path": {
+        "pattern": [
+          "/alpha/[A-Za-z]+"
+        ]
+      },
+      "headers": {
+        "accept": {
+          "pattern": [
+            "application/(json|xml){1}",
+            ".*application.*"
+          ]
+        }
+      }
+    },
+    "response": {
+      "statusCode": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": "{\"id\": \"regex\",\"name\": \"Regex response\"}"
+    }
+  },
+  {
+    "request": {
+      "method": "GET",
+      "path": {
+        "pattern": [
+          "/search/query/[a-zA-Z0-9]+"
+        ]
+      },
+      "headers": {
+        "accept": {
+          "pattern": [
+            "video/(mp4|avi)"
+          ]
+        }
+      }
+    },
+    "response": {
+      "statusCode": 200,
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": "{\"id\": \"regex\",\"name\": \"Regex response\"}"
+    }
+  }
+]

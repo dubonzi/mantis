@@ -10,4 +10,3 @@ Possibly remove ignite dependency
 Performance tests
 APM/Metrics (Opentelemetry integration)
 Improve/refactor validation
-Support for multiple mappings in one file

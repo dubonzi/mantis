@@ -49,38 +49,28 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 		func(path string, d fs.DirEntry, err error) error {
 			if d != nil && !d.IsDir() {
 				log.Debugf("reading file '%s'", path)
-				mapping, err := loader.decodeFile(path)
+				loaded, err := loader.decodeFile(path)
 				if err != nil {
 					return err
 				}
 
-				if mapping.Response.BodyFile != "" {
-					bodyContent, err := loadFile(filepath.Join(responsesPath, mapping.Response.BodyFile))
+				for _, mapping := range loaded {
+
+					err := loader.processMapping(&mapping, responsesPath)
 					if err != nil {
-						return errors.Wrapf(err, "error loading response body file for mapping file [ %s ]", path)
+						return errors.Wrapf(err, "error processing file [ %s ]", path)
 					}
-					mapping.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
-				}
 
-				err = loader.regexCache.AddFromMapping(mapping)
-				if err != nil {
-					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
-				}
-
-				err = loader.jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
-				if err != nil {
-					return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
-				}
-
-				if mapping.Scenario != nil {
-					loader.scenarioHandler.AddScenario(mapping)
-				} else {
-					err = mappings.Put(mapping)
-					if err != nil {
-						return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
+					if mapping.Scenario != nil {
+						loader.scenarioHandler.AddScenario(mapping)
+					} else {
+						err = mappings.Put(mapping)
+						if err != nil {
+							return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
+						}
 					}
-				}
 
+				}
 			}
 			return nil
 		},
@@ -99,19 +89,24 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 	return nil
 }
 
-func (*Loader) decodeFile(path string) (Mapping, error) {
+func (*Loader) decodeFile(path string) ([]Mapping, error) {
 	content, err := loadFile(path)
 	if err != nil {
-		return Mapping{}, err
+		return nil, err
 	}
 
-	var m Mapping
-	err = json.Unmarshal(content, &m)
+	var ms []Mapping
+	err = json.Unmarshal(content, &ms)
 	if err != nil {
-		return Mapping{}, err
+		var m Mapping
+		err = json.Unmarshal(content, &m)
+		if err != nil {
+			return nil, err
+		}
+		ms = append(ms, m)
 	}
 
-	return m, nil
+	return ms, nil
 }
 
 func loadFile(path string) ([]byte, error) {
@@ -123,4 +118,25 @@ func loadFile(path string) ([]byte, error) {
 		return nil, errors.Wrapf(err, "error reading file '%s'", path)
 	}
 	return content, nil
+}
+
+func (loader Loader) processMapping(mapping *Mapping, responsesPath string) error {
+	if mapping.Response.BodyFile != "" {
+		bodyContent, err := loadFile(filepath.Join(responsesPath, mapping.Response.BodyFile))
+		if err != nil {
+			return errors.Wrap(err, "error loading response body file for mapping")
+		}
+		mapping.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
+	}
+
+	err := loader.regexCache.AddFromMapping(*mapping)
+	if err != nil {
+		return errors.Wrap(err, "error adding mapping from")
+	}
+
+	err = loader.jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
+	if err != nil {
+		return errors.Wrap(err, "error adding mapping from")
+	}
+	return nil
 }

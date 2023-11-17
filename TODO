@@ -1,4 +1,3 @@
-Add uniqueid and date to each request
 Add a 'Context' with an API to track Mappings/Matching statuses
 Sort mappings based on their cost (performance - regex/jsonPath cost more than an exact match for example)
 Dynamicaly sort mappings during runtime based on most 'hit' (using the context info from context)?

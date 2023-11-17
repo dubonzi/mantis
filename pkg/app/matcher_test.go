@@ -190,26 +190,38 @@ func getMappings() Mappings {
 				Headers: map[string]CommonMatch{"authorization": {Exact: "Bearer Bear 🐻"}},
 			},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "🐻"},
+			MaxScore: 2,
+			Cost:     0,
 		},
 		{
 			Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/match/me/123?file=true"}},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"message": "Hello from the body file"}`},
+			MaxScore: 1,
+			Cost:     0,
 		},
 		{
 			Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/simple"}},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "I'm a simple response"},
+			MaxScore: 1,
+			Cost:     0,
 		},
 		{
 			Request:  RequestMapping{Method: "GET", Path: CommonMatch{Contains: []string{"contains/123"}}},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping contains path"},
+			MaxScore: 1,
+			Cost:     2,
 		},
 		{
 			Request:  RequestMapping{Method: "GET", Path: CommonMatch{Patterns: []string{"regex/[0-9]+$", `regex/\d{1}$`}}},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping with regex on path"},
+			MaxScore: 2,
+			Cost:     10,
 		},
 		{
 			Request:  RequestMapping{Method: "GET", Path: CommonMatch{Patterns: []string{"combination/[0-9]+$"}, Contains: []string{"123"}}},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "text/plain"}, Body: "Mapping combining path regex and contains"},
+			MaxScore: 2,
+			Cost:     7,
 		},
 		{
 			Request: RequestMapping{
@@ -218,6 +230,8 @@ func getMappings() Mappings {
 				Headers: map[string]CommonMatch{"accept": {Contains: []string{"application"}, Patterns: []string{"application/(json|xml){1}$"}}},
 			},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"message": "Mapping combining path/headers regex and contains"}`},
+			MaxScore: 5,
+			Cost:     16,
 		},
 		{
 			Request: RequestMapping{
@@ -227,10 +241,14 @@ func getMappings() Mappings {
 				Body:    BodyMatch{CommonMatch: CommonMatch{Exact: `{"cart": "555"}`}},
 			},
 			Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "12345"}},
+			MaxScore: 3,
+			Cost:     0,
 		},
 		{
 			Request:  RequestMapping{Method: "POST", Path: CommonMatch{Exact: "/order"}, Body: BodyMatch{CommonMatch: CommonMatch{Exact: `{"cart": "555"}`}}},
 			Response: ResponseMapping{StatusCode: 401},
+			MaxScore: 2,
+			Cost:     0,
 		},
 		{
 			Request: RequestMapping{
@@ -240,6 +258,8 @@ func getMappings() Mappings {
 				Body:    BodyMatch{CommonMatch: CommonMatch{Contains: []string{"name", `"honey": true`}}},
 			},
 			Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "12345"}},
+			MaxScore: 5,
+			Cost:     10,
 		},
 		{
 			Request: RequestMapping{
@@ -249,10 +269,14 @@ func getMappings() Mappings {
 				Body:    BodyMatch{CommonMatch: CommonMatch{Patterns: []string{`"name":\s*"[A-z\s]+"`}}},
 			},
 			Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"location": "999"}},
+			MaxScore: 3,
+			Cost:     10,
 		},
 		{
 			Request:  RequestMapping{Method: "PUT", Path: CommonMatch{Exact: "/json/path"}, Body: BodyMatch{JsonPath: []string{"$.products[?(@.id == '12345')]"}}},
 			Response: ResponseMapping{StatusCode: 204, Headers: map[string]string{"multiple": "false"}},
+			MaxScore: 2,
+			Cost:     4,
 		},
 		{
 			Request: RequestMapping{
@@ -261,10 +285,14 @@ func getMappings() Mappings {
 				Body:   BodyMatch{JsonPath: []string{"$.products[?(@.id == '12346')]", "$.users[?(@.name == 'Bob')]"}},
 			},
 			Response: ResponseMapping{StatusCode: 204, Headers: map[string]string{"multiple": "true"}},
+			MaxScore: 3,
+			Cost:     8,
 		},
 		{
 			Request:  RequestMapping{Method: "DELETE", Path: CommonMatch{Exact: "/cart/123"}},
 			Response: ResponseMapping{StatusCode: 204},
+			MaxScore: 1,
+			Cost:     0,
 		},
 	}
 

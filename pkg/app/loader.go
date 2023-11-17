@@ -46,19 +46,18 @@ func (loader *Loader) GetMappings() (Mappings, error) {
 func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, mappings Mappings) error {
 	err := filepath.WalkDir(
 		mappingsPath,
-		func(path string, d fs.DirEntry, err error) error {
+		func(filePath string, d fs.DirEntry, err error) error {
 			if d != nil && !d.IsDir() {
-				log.Debugf("reading file '%s'", path)
-				loaded, err := loader.decodeFile(path)
+				log.Debugf("reading file '%s'", filePath)
+				loaded, err := loader.decodeMapping(filePath)
 				if err != nil {
 					return err
 				}
 
 				for _, mapping := range loaded {
-
-					err := loader.processMapping(&mapping, responsesPath)
+					err := loader.processMapping(&mapping, filePath, responsesPath)
 					if err != nil {
-						return errors.Wrapf(err, "error processing file [ %s ]", path)
+						return errors.Wrapf(err, "error processing file [ %s ]", filePath)
 					}
 
 					if mapping.Scenario != nil {
@@ -66,7 +65,7 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 					} else {
 						err = mappings.Put(mapping)
 						if err != nil {
-							return errors.Wrapf(err, "error adding mapping from file [ %s ]", path)
+							return errors.Wrapf(err, "error adding mapping from file [ %s ]", filePath)
 						}
 					}
 
@@ -89,24 +88,27 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 	return nil
 }
 
-func (*Loader) decodeFile(path string) ([]Mapping, error) {
+func (*Loader) decodeMapping(path string) ([]Mapping, error) {
 	content, err := loadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	var ms []Mapping
-	err = json.Unmarshal(content, &ms)
+	var mappings []Mapping
+	err = json.Unmarshal(content, &mappings)
 	if err != nil {
 		var m Mapping
 		err = json.Unmarshal(content, &m)
 		if err != nil {
 			return nil, err
 		}
-		ms = append(ms, m)
+		mappings = append(mappings, m)
+	}
+	for _, m := range mappings {
+		m.FilePath = path
 	}
 
-	return ms, nil
+	return mappings, nil
 }
 
 func loadFile(path string) ([]byte, error) {
@@ -120,7 +122,7 @@ func loadFile(path string) ([]byte, error) {
 	return content, nil
 }
 
-func (loader Loader) processMapping(mapping *Mapping, responsesPath string) error {
+func (loader Loader) processMapping(mapping *Mapping, filePath, responsesPath string) error {
 	if mapping.Response.BodyFile != "" {
 		bodyContent, err := loadFile(filepath.Join(responsesPath, mapping.Response.BodyFile))
 		if err != nil {
@@ -138,5 +140,9 @@ func (loader Loader) processMapping(mapping *Mapping, responsesPath string) erro
 	if err != nil {
 		return errors.Wrap(err, "error adding mapping from")
 	}
+
+	mapping.CalcMaxScoreAndCost()
+	mapping.FilePath = filePath
+
 	return nil
 }

@@ -18,6 +18,8 @@ var (
 				Path:   CommonMatch{Exact: "/delay/fixed"},
 			},
 			Response: ResponseMapping{StatusCode: 204, ResponseDelay: Delay{Fixed: FixedDelay{Duration: Duration(time.Millisecond * 250)}}},
+			MaxScore: 1,
+			FilePath: "testdata/load/valid/mapping/get_fixed_delay.json",
 		},
 		{
 			Request: RequestMapping{
@@ -26,6 +28,8 @@ var (
 				Headers: map[string]CommonMatch{"accept": {Exact: "application/json"}},
 			},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"id": "12345","name": "My Product","description": "This is it"}`, BodyFile: "get_product_12345_response.json"},
+			MaxScore: 2,
+			FilePath: "testdata/load/valid/mapping/get_product_12345.json",
 		},
 		{
 			Request: RequestMapping{
@@ -34,6 +38,9 @@ var (
 				Headers: map[string]CommonMatch{"accept": {Patterns: []string{"application/(json|xml){1}", ".*json.*"}}},
 			},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"id": "regex","name": "Regex response"}`},
+			MaxScore: 4,
+			Cost:     20,
+			FilePath: "testdata/load/valid/mapping/get_regex.json",
 		},
 		{
 			Request: RequestMapping{
@@ -42,6 +49,9 @@ var (
 				Headers: map[string]CommonMatch{"accept": {Patterns: []string{"application/(json|xml){1}", ".*application.*"}}},
 			},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"id": "regex","name": "Regex response"}`},
+			MaxScore: 3,
+			Cost:     15,
+			FilePath: "testdata/load/valid/mapping/multiple.json",
 		},
 		{
 			Request: RequestMapping{
@@ -50,6 +60,9 @@ var (
 				Headers: map[string]CommonMatch{"accept": {Patterns: []string{"video/(mp4|avi)"}}},
 			},
 			Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"content-type": "application/json"}, Body: `{"id": "regex","name": "Regex response"}`},
+			MaxScore: 2,
+			Cost:     10,
+			FilePath: "testdata/load/valid/mapping/multiple.json",
 		},
 		{
 			Request: RequestMapping{
@@ -58,6 +71,9 @@ var (
 				Body:   BodyMatch{JsonPath: []string{"$[?(@.product.id == '12345')]", "$.person[?(@.age > 21 || @.name == 'John')]"}},
 			},
 			Response: ResponseMapping{StatusCode: 204},
+			MaxScore: 3,
+			Cost:     8,
+			FilePath: "testdata/load/valid/mapping/put_json_path.json",
 		},
 		{
 			Request: RequestMapping{
@@ -67,6 +83,9 @@ var (
 				Body:    BodyMatch{CommonMatch: CommonMatch{Contains: []string{"orderId", "999"}}},
 			},
 			Response: ResponseMapping{StatusCode: 200},
+			MaxScore: 4,
+			Cost:     4,
+			FilePath: "testdata/load/valid/mapping/post_order.json",
 		},
 	}
 	validScenarioMappings = []Mapping{
@@ -84,6 +103,9 @@ var (
 				Body:    BodyMatch{CommonMatch: CommonMatch{Contains: []string{"scenario", "test"}}},
 			},
 			Response: ResponseMapping{StatusCode: 200},
+			MaxScore: 4,
+			Cost:     4,
+			FilePath: "testdata/load/valid/mapping/post_scenario_start.json",
 		},
 		{
 			Scenario: &ScenarioMapping{
@@ -97,6 +119,9 @@ var (
 				Body:    BodyMatch{CommonMatch: CommonMatch{Contains: []string{"scenario", "test"}}},
 			},
 			Response: ResponseMapping{StatusCode: 400},
+			MaxScore: 4,
+			Cost:     4,
+			FilePath: "testdata/load/valid/mapping/post_scenario_state.json",
 		},
 	}
 )
@@ -191,7 +216,7 @@ func TestDecodeFile(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mapping, err := loader.decodeFile(tt.path)
+			mapping, err := loader.decodeMapping(tt.path)
 
 			if err != nil {
 				if !tt.anyErr {

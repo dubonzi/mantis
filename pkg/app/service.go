@@ -18,10 +18,11 @@ type Service struct {
 }
 
 type MatchResult struct {
-	StatusCode int
-	Headers    map[string]string
-	Body       any
-	Matched    bool
+	StatusCode  int
+	Headers     map[string]string
+	Body        any
+	Matched     bool
+	MappingFile string
 }
 
 func NewMatchResult(mapping *Mapping, r Request, matched bool, partial bool) MatchResult {
@@ -34,6 +35,7 @@ func NewMatchResult(mapping *Mapping, r Request, matched bool, partial bool) Mat
 		result.Body = buildNotFoundResponse(r, &mapping.Request)
 		result.StatusCode = http.StatusNotFound
 		result.Headers["Content-type"] = "application/json"
+		result.Headers["X-Mapping-File"] = mapping.FilePath
 		return result
 	}
 
@@ -49,6 +51,10 @@ func NewMatchResult(mapping *Mapping, r Request, matched bool, partial bool) Mat
 	}
 	result.StatusCode = mapping.Response.StatusCode
 	result.Headers = mapping.Response.Headers
+	if result.Headers == nil {
+		result.Headers = make(map[string]string)
+	}
+	result.Headers["X-Mapping-File"] = mapping.FilePath
 
 	return result
 }

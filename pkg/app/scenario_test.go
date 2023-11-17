@@ -159,15 +159,15 @@ func TestScenarioMatching(t *testing.T) {
 			cases: []scenarioCase{
 				{
 					request:  Request{Method: "DELETE", Path: "/scenario/123"},
-					expected: MatchResult{StatusCode: 204, Matched: true},
+					expected: MatchResult{StatusCode: 204, Headers: map[string]string{"X-Mapping-File": "scenario1_1"}, Matched: true},
 				},
 				{
 					request:  Request{Method: "DELETE", Path: "/scenario/123"},
-					expected: MatchResult{StatusCode: 404, Matched: true},
+					expected: MatchResult{StatusCode: 404, Headers: map[string]string{"X-Mapping-File": "scenario1_2"}, Matched: true},
 				},
 				{
 					request:  Request{Method: "GET", Path: "/scenario/123"},
-					expected: MatchResult{StatusCode: 404, Matched: true},
+					expected: MatchResult{StatusCode: 404, Headers: map[string]string{"X-Mapping-File": "scenario1_3"}, Matched: true},
 				},
 			},
 		},
@@ -186,11 +186,11 @@ func TestScenarioMatching(t *testing.T) {
 				},
 				{
 					request:  Request{Method: "POST", Path: "/objects"},
-					expected: MatchResult{StatusCode: 201, Headers: map[string]string{"Location": "/objects/123"}, Matched: true},
+					expected: MatchResult{StatusCode: 201, Headers: map[string]string{"Location": "/objects/123", "X-Mapping-File": "scenario2_1"}, Matched: true},
 				},
 				{
 					request:  Request{Method: "GET", Path: "/objects/123"},
-					expected: MatchResult{StatusCode: 200, Body: "{\"id\": 123}", Matched: true},
+					expected: MatchResult{StatusCode: 200, Body: "{\"id\": 123}", Headers: map[string]string{"X-Mapping-File": "scenario2_2"}, Matched: true},
 				},
 			},
 		},
@@ -284,16 +284,22 @@ var validScenarios = map[string][]Mapping{
 			Request:  RequestMapping{Method: "DELETE", Path: CommonMatch{Exact: "/scenario/123"}},
 			Response: ResponseMapping{StatusCode: 204},
 			MaxScore: 1,
+			Cost:     0,
+			FilePath: "scenario1_1",
 		}, {
 			Scenario: &ScenarioMapping{Name: "First Scenario", State: "Object Deleted", NewState: "Get Deleted Object"},
 			Request:  RequestMapping{Method: "DELETE", Path: CommonMatch{Exact: "/scenario/123"}},
 			Response: ResponseMapping{StatusCode: 404},
 			MaxScore: 1,
+			Cost:     0,
+			FilePath: "scenario1_2",
 		}, {
 			Scenario: &ScenarioMapping{Name: "First Scenario", State: "Get Deleted Object"},
 			Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/scenario/123"}},
 			Response: ResponseMapping{StatusCode: 404},
 			MaxScore: 1,
+			Cost:     0,
+			FilePath: "scenario1_3",
 		},
 	},
 	"secondScenario": {
@@ -302,11 +308,15 @@ var validScenarios = map[string][]Mapping{
 			Request:  RequestMapping{Method: "POST", Path: CommonMatch{Exact: "/objects"}},
 			Response: ResponseMapping{StatusCode: 201, Headers: map[string]string{"Location": "/objects/123"}},
 			MaxScore: 1,
+			Cost:     0,
+			FilePath: "scenario2_1",
 		}, {
 			Scenario: &ScenarioMapping{Name: "Second Scenario", State: "Object Created"},
 			Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/objects/123"}},
 			Response: ResponseMapping{StatusCode: 200, Body: "{\"id\": 123}"},
 			MaxScore: 1,
+			Cost:     0,
+			FilePath: "scenario2_2",
 		},
 	},
 }

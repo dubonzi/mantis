@@ -49,7 +49,6 @@ func (hand *ScenarioHandler) AddScenario(mapping Mapping) {
 		return
 	}
 
-	mapping = mapping.CalcMaxScoreAndCost()
 	scMapping := mapping.Scenario
 
 	sc, scenarioOk := hand.scenarios[scMapping.Name]

@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/ohler55/ojg/alt"
 	"github.com/ohler55/ojg/oj"
 	"github.com/stretchr/testify/assert"
@@ -72,7 +74,14 @@ func TestRequest(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			got := RequestFromFiber(tt.input)
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.want.Method, got.Method)
+			assert.Equal(t, tt.want.Path, got.Path)
+			assert.Equal(t, tt.want.Headers, got.Headers)
+			assert.Equal(t, tt.want.Body, got.Body)
+			_, err := uuid.Parse(got.ID)
+			assert.NoError(t, err)
+			_, err = time.Parse(time.RFC3339Nano, got.Date)
+			assert.NoError(t, err)
 		})
 	}
 

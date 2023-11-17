@@ -18,11 +18,12 @@ type Mapping struct {
 	Request  RequestMapping   `json:"request"`
 	Response ResponseMapping  `json:"response"`
 
-	MaxScore int
-	Cost     int
+	MaxScore int    `json:"-"`
+	Cost     int    `json:"-"`
+	FilePath string `json:"-"`
 }
 
-func (m Mapping) CalcMaxScoreAndCost() Mapping { // TODO: Add Score and Cost to tests
+func (m *Mapping) CalcMaxScoreAndCost() {
 	m.MaxScore = m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
 
 	var cost int
@@ -34,8 +35,6 @@ func (m Mapping) CalcMaxScoreAndCost() Mapping { // TODO: Add Score and Cost to 
 	}
 
 	m.Cost = cost
-
-	return m
 }
 
 func (m Mapping) Validate() error {
@@ -67,8 +66,6 @@ func (m Mappings) Put(mapping Mapping) error {
 	}
 
 	log.Debugf("adding mapping: %+v", mapping)
-
-	mapping = mapping.CalcMaxScoreAndCost()
 
 	m[mapping.Request.Method] = append(m[mapping.Request.Method], mapping)
 	return nil

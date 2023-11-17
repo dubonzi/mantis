@@ -29,11 +29,15 @@ func TestService(t *testing.T) {
 				Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/fixed/delay"}},
 				Response: ResponseMapping{StatusCode: 204, ResponseDelay: Delay{FixedDelay{Duration: Duration(time.Millisecond * 10000)}}},
 				MaxScore: 1,
+				Cost:     0,
+				FilePath: "file_1",
 			},
 			{
 				Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/no/delay"}},
 				Response: ResponseMapping{StatusCode: 204},
 				MaxScore: 1,
+				Cost:     0,
+				FilePath: "file_2",
 			},
 		},
 	}
@@ -47,13 +51,13 @@ func TestService(t *testing.T) {
 		{
 			name:       "Should match request with no delay",
 			request:    Request{Method: "GET", Path: "/no/delay"},
-			wantResult: MatchResult{StatusCode: 204, Matched: true},
+			wantResult: MatchResult{StatusCode: 204, Matched: true, Headers: map[string]string{"X-Mapping-File": "file_2"}},
 			wantDelay:  false,
 		},
 		{
 			name:       "Should match request with fixed delay",
 			request:    Request{Method: "GET", Path: "/fixed/delay"},
-			wantResult: MatchResult{StatusCode: 204, Matched: true},
+			wantResult: MatchResult{StatusCode: 204, Matched: true, Headers: map[string]string{"X-Mapping-File": "file_1"}},
 			wantDelay:  true,
 		},
 	}

@@ -2,9 +2,11 @@ package app
 
 import (
 	"strings"
+	"time"
 
 	"github.com/americanas-go/log"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/ohler55/ojg/oj"
 )
 
@@ -13,18 +15,22 @@ type ServiceMatcher interface {
 }
 
 type Request struct {
+	ID      string            `json:"id"`
 	Path    string            `json:"path"`
 	Method  string            `json:"method"`
 	Headers map[string]string `json:"headers"`
 	Body    string            `json:"body"`
+	Date    string            `json:"date"`
 }
 
 func RequestFromFiber(r *fiber.Request) Request {
 	req := Request{
+		ID:      uuid.NewString(),
 		Path:    string(r.URI().RequestURI()),
 		Body:    string(r.Body()),
 		Method:  string(r.Header.Method()),
 		Headers: make(map[string]string),
+		Date:    time.Now().Format(time.RFC3339Nano),
 	}
 	r.Header.VisitAll(
 		func(key, value []byte) {

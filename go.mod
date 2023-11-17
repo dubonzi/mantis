@@ -7,6 +7,7 @@ require (
 	github.com/americanas-go/ignite v1.13.3
 	github.com/americanas-go/log v1.8.9
 	github.com/gofiber/fiber/v2 v2.50.0
+	github.com/google/uuid v1.4.0
 	github.com/ohler55/ojg v1.20.3
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.4
@@ -25,7 +26,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.16.0 // indirect
 	github.com/gobeam/stringy v0.0.6 // indirect
-	github.com/google/uuid v1.4.0 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.4.9 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
 	github.com/knadh/koanf v1.5.0 // indirect

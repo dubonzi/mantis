@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -69,7 +70,7 @@ func TestService(t *testing.T) {
 		service := NewService(mappings, matcher, NewScenarioHandler(matcher), &delayer)
 
 		t.Run(tt.name, func(t *testing.T) {
-			res := service.MatchRequest(tt.request)
+			res := service.MatchRequest(context.Background(), tt.request)
 			assert.Equal(t, tt.wantResult, res)
 			assert.Equal(t, tt.wantDelay, delayer.FixedCalled)
 		})

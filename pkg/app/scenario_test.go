@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -209,7 +210,7 @@ func TestScenarioMatching(t *testing.T) {
 
 			for i, c := range tt.cases {
 				t.Run(fmt.Sprintf("%d", i+1), func(t *testing.T) {
-					mapping, matched, partial := handler.MatchScenario(c.request)
+					mapping, matched, partial := handler.MatchScenario(context.Background(), c.request)
 					got := NewMatchResult(&mapping, c.request, matched, partial)
 					assert.Equal(t, c.expected.Matched, matched)
 					assert.Equal(t, c.expected, got)

@@ -51,3 +51,7 @@ func (d *Duration) UnmarshalJSON(data []byte) error {
 	*d = Duration(dur)
 	return nil
 }
+
+func (d Duration) String() string {
+	return time.Duration(d).String()
+}

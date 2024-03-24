@@ -2,9 +2,7 @@ package main
 
 import (
 	"github.com/americanas-go/config"
-	igfiber "github.com/americanas-go/ignite/gofiber/fiber.v2"
 	igzap "github.com/americanas-go/log/contrib/go.uber.org/zap.v1"
-	"github.com/gofiber/fiber/v2"
 )
 
 func loadDefaultConfig() {
@@ -22,28 +20,6 @@ func loadDefaultConfig() {
 
 	config.Add("fx.log.enable", false, "Enable/disable fx startup log")
 
-}
-
-func serverFiberOptions() *igfiber.Options {
-	return &igfiber.Options{
-		Port: config.Int("server.port"),
-		Type: "REST",
-		Config: &fiber.Config{
-			AppName:               "Mantis Server",
-			DisableStartupMessage: config.Bool("server.disableStartupMessage"),
-		},
-	}
-}
-
-func healthFiberOptions() *igfiber.Options {
-	return &igfiber.Options{
-		Port: config.Int("health.port"),
-		Type: "REST",
-		Config: &fiber.Config{
-			AppName:               "Health Server",
-			DisableStartupMessage: config.Bool("server.disableStartupMessage"),
-		},
-	}
 }
 
 func zapOptions() *igzap.Options {

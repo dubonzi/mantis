@@ -4,8 +4,8 @@ Dynamicaly sort mappings during runtime based on most 'hit' (using the context i
 Add more tests
 Display differences when no match is found
 Add delay option to response (normal distribution)
-Replace fiber's default JSON serialization with oj (performance)
-Possibly remove ignite dependency
-Performance tests
+Remove americanas-go/log dependency
+Possibly remove americanas-go/config dependency
 APM/Metrics (Opentelemetry integration)
+Performance tests
 Improve/refactor validation

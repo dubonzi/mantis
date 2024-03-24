@@ -167,3 +167,17 @@ func TestHandleResponse(t *testing.T) {
 	}
 
 }
+
+func TestHealth(t *testing.T) {
+	app := fiber.New()
+	hand := NewHandler(nil)
+	app.Get("/health", hand.Health)
+
+	res, err := app.Test(httptest.NewRequest("GET", "/health", nil))
+	require.NoError(t, err)
+
+	r, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, `{"status": "ok"}`, string(r))
+}

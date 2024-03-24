@@ -2,15 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/americanas-go/config"
-	igfiber "github.com/americanas-go/ignite/gofiber/fiber.v2"
-	"github.com/americanas-go/ignite/gofiber/fiber.v2/plugins/contrib/americanas-go/health.v1"
-	"github.com/americanas-go/ignite/gofiber/fiber.v2/plugins/native/pprof"
 	"github.com/americanas-go/log"
 	"github.com/americanas-go/log/contrib/go.uber.org/zap.v1"
 	"github.com/dubonzi/mantis/pkg/app"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"go.uber.org/fx"
 )
 
@@ -41,23 +40,30 @@ func mainModule() fx.Option {
 func serverModule() fx.Option {
 	return fx.Invoke(
 		func(lc fx.Lifecycle, ctx context.Context, handler *app.Handler) {
-			srv := igfiber.NewServerWithOptions(
-				ctx,
-				serverFiberOptions(),
+			srv := fiber.New(
+				fiber.Config{
+					AppName:               "Mantis Server",
+					DisableStartupMessage: config.Bool("server.disableStartupMessage"),
+				},
 			)
 
-			srv.App().Use("/*", fiberErrorLogger)
+			srv.Use("/*", fiberErrorLogger)
+			srv.Use(pprof.New())
 			srv.All("/*", handler.All)
 
 			lc.Append(
 				fx.Hook{
 					OnStart: func(c context.Context) error {
-						go srv.Serve(ctx)
+						go func() {
+							if err := srv.Listen(":" + config.String("server.port")); err != nil {
+								panic(fmt.Errorf("error starting mantis server: %s", err))
+							}
+						}()
 						return nil
 					},
 					OnStop: func(c context.Context) error {
 						log.Info("Shuting down server")
-						return srv.App().Shutdown()
+						return srv.Shutdown()
 					},
 				},
 			)
@@ -68,22 +74,27 @@ func serverModule() fx.Option {
 func healthModule() fx.Option {
 	return fx.Invoke(
 		func(lc fx.Lifecycle, handler *app.Handler) {
-			ctx := context.Background()
-			srv := igfiber.NewServerWithOptions(
-				ctx,
-				healthFiberOptions(),
-				health.Register,
-				pprof.Register,
+			srv := fiber.New(
+				fiber.Config{
+					AppName:               "Mantis Health Server",
+					DisableStartupMessage: config.Bool("server.disableStartupMessage"),
+				},
 			)
+
+			srv.Get("/health", handler.Health)
 
 			lc.Append(
 				fx.Hook{
 					OnStart: func(c context.Context) error {
-						go srv.Serve(ctx)
+						go func() {
+							if err := srv.Listen(":" + config.String("health.port")); err != nil {
+								panic(fmt.Errorf("error starting health server: %s", err))
+							}
+						}()
 						return nil
 					},
 					OnStop: func(c context.Context) error {
-						return srv.App().Shutdown()
+						return srv.Shutdown()
 					},
 				},
 			)

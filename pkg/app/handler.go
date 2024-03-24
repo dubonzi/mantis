@@ -76,3 +76,8 @@ func (h Handler) All(c *fiber.Ctx) error {
 
 	return c.Send(nil)
 }
+
+func (Handler) Health(c *fiber.Ctx) error {
+	c.Context().SetContentType("application/json")
+	return c.SendString(`{"status": "ok"}`)
+}

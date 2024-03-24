@@ -19,7 +19,7 @@ func SetDefaultConfig() {
 	config.Add("loader.path.mapping", "files/mapping", "Path to the folder containing the mapping files")
 	config.Add("loader.path.response", "files/response", "Path to the folder containing the response files")
 
-	config.Add("log.level", "DEBUG", "Logging level")
+	config.Add("log.level", "INFO", "Logging level")
 	config.Add("log.format", "TEXT", "Logging format")
 
 	config.Add("fx.log.enable", false, "Enable/disable fx startup log")

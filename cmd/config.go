@@ -8,7 +8,7 @@ import (
 func loadDefaultConfig() {
 
 	config.Add("server.port", 8080, "Server port")
-	config.Add("server.disableStartupMessage", false, "Disable fiber startup message")
+	config.Add("server.disableStartupMessage", true, "Disable fiber startup message")
 
 	config.Add("health.port", 8081, "Health endpoint port (must not be the same as the server port)")
 

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"strings"
 )
 
@@ -16,7 +17,7 @@ func NewMatcher(r *RegexCache, j *JSONPathCache) *Matcher {
 	}
 }
 
-func (matcher *Matcher) Match(r Request, mappings Mappings, scenarioStates map[string]ScenarioState) (Mapping, bool, bool) {
+func (matcher *Matcher) Match(ctx context.Context, r Request, mappings Mappings, scenarioStates map[string]ScenarioState) (Mapping, bool, bool) {
 	methodMappings, ok := mappings[r.Method]
 	if !ok {
 		return Mapping{}, false, false

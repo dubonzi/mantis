@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 )
 
 type ServiceMatcher interface {
-	MatchRequest(Request) MatchResult
+	MatchRequest(context.Context, Request) MatchResult
 }
 
 type Request struct {
@@ -50,7 +51,7 @@ func NewHandler(service ServiceMatcher) *Handler {
 
 func (h Handler) All(c *fiber.Ctx) error {
 	req := RequestFromFiber(c.Request())
-	res := h.service.MatchRequest(req)
+	res := h.service.MatchRequest(c.UserContext(), req)
 
 	if !res.Matched {
 		log.WithFields(log.Fields{

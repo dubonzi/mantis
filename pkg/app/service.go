@@ -1,9 +1,13 @@
 package app
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/dubonzi/mantis/pkg/telemetry"
 	"github.com/ohler55/ojg/oj"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -78,20 +82,30 @@ func NewService(mappings Mappings, matcher *Matcher, scenarioHandler *ScenarioHa
 	}
 }
 
-func (s *Service) MatchRequest(r Request) MatchResult {
+func (s *Service) MatchRequest(ctx context.Context, r Request) MatchResult {
+	ctx, span := telemetry.StartSpan(
+		ctx,
+		"match_request",
+		trace.WithSpanKind(trace.SpanKindInternal),
+		trace.WithAttributes(attribute.String("request_id", r.ID)),
+	)
+	defer span.End()
+
 	var mapping Mapping
 	var matched, partial bool
-
-	mapping, matched, partial = s.scenarioHandler.MatchScenario(r)
+	mapping, matched, partial = s.scenarioHandler.MatchScenario(ctx, r)
 	if !matched {
-		mapping, matched, partial = s.matcher.Match(r, s.mappings, nil)
+		mapping, matched, partial = s.matcher.Match(ctx, r, s.mappings, nil)
 	}
 
 	result := NewMatchResult(&mapping, r, matched, partial)
 
 	if matched {
 		s.delayer.Apply(&mapping.Response.ResponseDelay)
+		span.SetAttributes(attribute.String("delay", mapping.Response.ResponseDelay.Fixed.Duration.String()))
 	}
+
+	span.SetAttributes(attribute.Bool("matched", matched))
 
 	return result
 }

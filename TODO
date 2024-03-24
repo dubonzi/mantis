@@ -6,6 +6,6 @@ Display differences when no match is found
 Add delay option to response (normal distribution)
 Remove americanas-go/log dependency
 Possibly remove americanas-go/config dependency
-APM/Metrics (Opentelemetry integration)
+Add Metrics (Opentelemetry)
 Performance tests
 Improve/refactor validation

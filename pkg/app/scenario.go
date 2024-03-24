@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ohler55/ojg/oj"
@@ -70,8 +71,8 @@ func (hand *ScenarioHandler) AddScenario(mapping Mapping) {
 	hand.scenarioMappings.Put(mapping)
 }
 
-func (hand *ScenarioHandler) MatchScenario(request Request) (Mapping, bool, bool) {
-	mapping, matched, partial := hand.matcher.Match(request, hand.scenarioMappings, hand.scenarios)
+func (hand *ScenarioHandler) MatchScenario(ctx context.Context, request Request) (Mapping, bool, bool) {
+	mapping, matched, partial := hand.matcher.Match(ctx, request, hand.scenarioMappings, hand.scenarios)
 	if !matched || partial {
 		return Mapping{}, false, false
 	}

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -163,7 +164,7 @@ func TestMatcher(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mapping, matched, partial := matcher.Match(tt.input, mappings, nil)
+			mapping, matched, partial := matcher.Match(context.Background(), tt.input, mappings, nil)
 
 			result := NewMatchResult(&mapping, tt.input, matched, partial)
 

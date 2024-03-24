@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -88,23 +89,23 @@ func TestRequest(t *testing.T) {
 }
 
 type mockService struct {
-	mockMatchFunc func(Request) MatchResult
+	mockMatchFunc func(context.Context, Request) MatchResult
 }
 
-func (m mockService) MatchRequest(r Request) MatchResult {
-	return m.mockMatchFunc(r)
+func (m mockService) MatchRequest(ctx context.Context, r Request) MatchResult {
+	return m.mockMatchFunc(ctx, r)
 }
 
 func TestHandleResponse(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		matchFunc  func(Request) MatchResult
+		matchFunc  func(context.Context, Request) MatchResult
 		assertFunc func(*testing.T, *http.Response)
 	}{
 		{
 			name: "Should send not found response",
-			matchFunc: func(r Request) MatchResult {
+			matchFunc: func(ctx context.Context, r Request) MatchResult {
 				return MatchResult{
 					StatusCode: http.StatusNotFound,
 					Headers:    map[string]string{"Content-type": "application/json"},
@@ -124,7 +125,7 @@ func TestHandleResponse(t *testing.T) {
 		},
 		{
 			name: "Should send non json response",
-			matchFunc: func(r Request) MatchResult {
+			matchFunc: func(ctx context.Context, r Request) MatchResult {
 				return MatchResult{
 					StatusCode: http.StatusOK,
 					Headers:    map[string]string{"Content-type": "application/xml"},
@@ -141,7 +142,7 @@ func TestHandleResponse(t *testing.T) {
 		},
 		{
 			name: "Should send response without body",
-			matchFunc: func(r Request) MatchResult {
+			matchFunc: func(ctx context.Context, r Request) MatchResult {
 				return MatchResult{
 					StatusCode: http.StatusCreated,
 					Headers:    map[string]string{"Location": "/users/123"},

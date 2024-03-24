@@ -34,6 +34,7 @@ As of now, Mantis has all of the core features needed to be used in almost any s
 - JSON Path support
 - Support for a Wiremock's `Scenario`-like feature
 - Simulate production environments more accurately by defining delays on responses
+- Opentelemetry traces support
 - More to come
 
 ## Running It

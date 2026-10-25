@@ -21,7 +21,6 @@ func mainModule() fx.Option {
 
 	return fx.Options(
 		fx.Provide(
-			context.Background,
 			app.NewHandler,
 			app.NewRegexCache,
 			func() app.LoaderConfig {

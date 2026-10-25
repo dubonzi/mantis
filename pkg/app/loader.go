@@ -3,16 +3,17 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 
 	"github.com/americanas-go/log"
-	"github.com/pkg/errors"
 )
 
 func FileNotFound(path string) error {
-	return errors.Errorf("file '%s' not found", path)
+	return fmt.Errorf("file '%s' not found", path)
 }
 
 type LoaderConfig struct {
@@ -46,7 +47,7 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 		mappingsPath,
 		func(filePath string, d fs.DirEntry, err error) error {
 			if err != nil {
-				return errors.Wrapf(err, "error walking mapping path %q", filePath)
+				return fmt.Errorf("error walking mapping path %q: %w", filePath, err)
 			}
 			if d != nil && !d.IsDir() {
 				log.Debugf("reading file '%s'", filePath)
@@ -58,18 +59,18 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 				for _, mapping := range loaded {
 					err := loader.processMapping(&mapping, filePath, responsesPath)
 					if err != nil {
-						return errors.Wrapf(err, "error processing file [ %s ]", filePath)
+						return fmt.Errorf("error processing file [ %s ]: %w", filePath, err)
 					}
 
 					if mapping.Scenario != nil {
 						err = loader.scenarioHandler.AddScenario(mapping)
 						if err != nil {
-							return errors.Wrapf(err, "error adding mapping from file [ %s ]", filePath)
+							return fmt.Errorf("error adding mapping from file [ %s ]: %w", filePath, err)
 						}
 					} else {
 						err = mappings.Put(mapping)
 						if err != nil {
-							return errors.Wrapf(err, "error adding mapping from file [ %s ]", filePath)
+							return fmt.Errorf("error adding mapping from file [ %s ]: %w", filePath, err)
 						}
 					}
 
@@ -85,7 +86,7 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 
 	err = loader.scenarioHandler.ValidateScenarioStates()
 	if err != nil {
-		return errors.Wrapf(err, "invalid scenario states")
+		return fmt.Errorf("invalid scenario states: %w", err)
 	}
 
 	log.Info("mappings loaded successfully")
@@ -118,7 +119,7 @@ func loadFile(path string) ([]byte, error) {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, FileNotFound(path)
 		}
-		return nil, errors.Wrapf(err, "error reading file '%s'", path)
+		return nil, fmt.Errorf("error reading file '%s': %w", path, err)
 	}
 	return content, nil
 }
@@ -127,7 +128,7 @@ func (loader Loader) processMapping(mapping *Mapping, filePath, responsesPath st
 	if mapping.Response.BodyFile != "" {
 		bodyContent, err := loadFile(filepath.Join(responsesPath, mapping.Response.BodyFile))
 		if err != nil {
-			return errors.Wrap(err, "error loading response body file for mapping")
+			return fmt.Errorf("error loading response body file for mapping: %w", err)
 		}
 		var compacted bytes.Buffer
 		if err := json.Compact(&compacted, bodyContent); err == nil {
@@ -138,12 +139,12 @@ func (loader Loader) processMapping(mapping *Mapping, filePath, responsesPath st
 
 	err := loader.regexCache.AddFromMapping(*mapping)
 	if err != nil {
-		return errors.Wrap(err, "error compiling regex patterns")
+		return fmt.Errorf("error compiling regex patterns: %w", err)
 	}
 
 	err = loader.jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
 	if err != nil {
-		return errors.Wrap(err, "error parsing jsonpath expressions")
+		return fmt.Errorf("error parsing jsonpath expressions: %w", err)
 	}
 
 	mapping.CalcMaxScoreAndCost()

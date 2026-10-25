@@ -1,10 +1,11 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/americanas-go/log"
 	"github.com/ohler55/ojg/jp"
 	"github.com/ohler55/ojg/oj"
-	"github.com/pkg/errors"
 )
 
 type JSONPathCache struct {
@@ -25,7 +26,7 @@ func (j *JSONPathCache) AddExpressions(expressions []string) error {
 
 		parsed, err := jp.ParseString(expr)
 		if err != nil {
-			return errors.Wrapf(err, "failed to parse jsonpath expression: %s ", expr)
+			return fmt.Errorf("failed to parse jsonpath expression: %s : %w", expr, err)
 		}
 
 		j.cache[expr] = parsed

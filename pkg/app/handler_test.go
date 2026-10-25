@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,8 +10,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/ohler55/ojg/alt"
-	"github.com/ohler55/ojg/oj"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -110,11 +109,12 @@ func TestHandleResponse(t *testing.T) {
 				}
 			},
 			assertFunc: func(t *testing.T, r *http.Response) {
-				body, err := oj.Load(r.Body)
+				body, err := io.ReadAll(r.Body)
 				require.NoError(t, err)
 				var nf NotFoundResponse
-				_, err = alt.Recompose(body, &nf)
+				err = json.Unmarshal(body, &nf)
 				require.NoError(t, err)
+				assert.NotContains(t, string(body), `"closestMapping"`)
 				assert.Equal(t, http.StatusNotFound, r.StatusCode)
 				assert.Equal(t, "application/json", r.Header.Get("Content-type"))
 				_, err = uuid.Parse(nf.Request.ID)
@@ -122,7 +122,7 @@ func TestHandleResponse(t *testing.T) {
 				_, err = time.Parse(time.RFC3339Nano, nf.Request.Date)
 				require.NoError(t, err)
 				nf.Request.ID, nf.Request.Date = "", ""
-				assert.Equal(t, buildNotFoundResponse(Request{Path: "/test", Method: "GET", Headers: make(map[string]string)}, nil), nf)
+				assert.Equal(t, buildNotFoundResponse(Request{Path: "/test", Method: "GET", Headers: nil}, nil), nf)
 			},
 		},
 		{
@@ -217,4 +217,73 @@ func TestMatchedHandlerDoesNotGenerateRequestMetadata(t *testing.T) {
 	body, err := io.ReadAll(response.Body)
 	require.NoError(t, err)
 	require.Equal(t, "matched", string(body))
+}
+
+func TestNotFoundClosestMappingJSON(t *testing.T) {
+	tests := []struct {
+		name string
+		body BodyMatch
+		want string
+	}{
+		{
+			name: "Should omit absent body conditions",
+			want: `{"method":"GET","path":{"pattern":["^/expected/<tag>&$"]},"headers":{"accept":{"exact":"application/json"}}}`,
+		},
+		{
+			name: "Should omit allocated empty body conditions",
+			body: BodyMatch{CommonMatch: CommonMatch{Contains: []string{}, Patterns: []string{}}, JsonPath: []string{}},
+			want: `{"method":"GET","path":{"pattern":["^/expected/<tag>&$"]},"headers":{"accept":{"exact":"application/json"}}}`,
+		},
+		{
+			name: "Should flatten embedded body conditions",
+			body: BodyMatch{CommonMatch: CommonMatch{Contains: []string{"<tag>&"}, Patterns: []string{"<tag>&"}}, JsonPath: []string{"$.marker"}},
+			want: `{"method":"GET","path":{"pattern":["^/expected/<tag>&$"]},"headers":{"accept":{"exact":"application/json"}},"body":{"contains":["<tag>&"],"pattern":["<tag>&"],"jsonPath":["$.marker"]}}`,
+		},
+		{
+			name: "Should retain exact body conditions",
+			body: BodyMatch{CommonMatch: CommonMatch{Exact: "<tag>&"}},
+			want: `{"method":"GET","path":{"pattern":["^/expected/<tag>&$"]},"headers":{"accept":{"exact":"application/json"}},"body":{"exact":"<tag>&"}}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mapping := Mapping{Request: RequestMapping{
+				Method:  "GET",
+				Path:    CommonMatch{Patterns: []string{"^/expected/<tag>&$"}},
+				Headers: map[string]CommonMatch{"accept": {Exact: "application/json"}},
+				Body:    tt.body,
+			}}
+			regex, jsonPath := NewRegexCache(), NewJSONPathCache()
+			require.NoError(t, regex.AddFromMapping(mapping))
+			require.NoError(t, jsonPath.AddExpressions(mapping.Request.Body.JsonPath))
+			mappings := make(Mappings)
+			require.NoError(t, mappings.Put(mapping))
+			matcher := NewMatcher(regex, jsonPath)
+			service := NewService(mappings, matcher, NewScenarioHandler(matcher), NewResponseDelayer())
+			app := fiber.New()
+			app.All("/*", NewHandler(service).All)
+			request := httptest.NewRequest("GET", "/missing", nil)
+			request.Header.Set("Accept", "application/json")
+
+			response, err := app.Test(request)
+			require.NoError(t, err)
+			defer response.Body.Close()
+			require.Equal(t, http.StatusNotFound, response.StatusCode)
+			assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
+			body, err := io.ReadAll(response.Body)
+			require.NoError(t, err)
+			var output struct {
+				ClosestMapping json.RawMessage            `json:"closestMapping"`
+				Request        map[string]json.RawMessage `json:"request"`
+			}
+			require.NoError(t, json.Unmarshal(body, &output))
+			assert.JSONEq(t, tt.want, string(output.ClosestMapping))
+			assert.NotContains(t, output.Request, "body")
+			assert.Contains(t, string(body), "<tag>&")
+			assert.NotContains(t, string(body), `\u003c`)
+			assert.NotContains(t, string(body), `\u003e`)
+			assert.NotContains(t, string(body), `\u0026`)
+		})
+	}
 }

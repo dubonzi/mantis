@@ -1,7 +1,9 @@
 package app
 
 import (
+	"io/fs"
 	"path/filepath"
+	"regexp/syntax"
 	"testing"
 	"time"
 
@@ -17,6 +19,7 @@ func TestLoadMappingsMissingDirectory(t *testing.T) {
 
 	require.ErrorContains(t, err, "error walking mapping path")
 	assert.ErrorContains(t, err, path)
+	assert.ErrorIs(t, err, fs.ErrNotExist)
 }
 
 func TestProcessMappingBodyFile(t *testing.T) {
@@ -85,6 +88,10 @@ func TestProcessMappingErrors(t *testing.T) {
 			err := loader.processMapping(&tt.mapping, "mapping.json", "")
 
 			require.ErrorContains(t, err, tt.wantErr)
+			if tt.name == "Should describe regex compilation errors" {
+				var syntaxErr *syntax.Error
+				assert.ErrorAs(t, err, &syntaxErr)
+			}
 		})
 	}
 }

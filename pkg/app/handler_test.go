@@ -78,10 +78,8 @@ func TestRequest(t *testing.T) {
 			assert.Equal(t, tt.want.Path, got.Path)
 			assert.Equal(t, tt.want.Headers, got.Headers)
 			assert.Equal(t, tt.want.Body, got.Body)
-			_, err := uuid.Parse(got.ID)
-			assert.NoError(t, err)
-			_, err = time.Parse(time.RFC3339Nano, got.Date)
-			assert.NoError(t, err)
+			assert.Empty(t, got.ID)
+			assert.Empty(t, got.Date)
 		})
 	}
 
@@ -119,6 +117,11 @@ func TestHandleResponse(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, r.StatusCode)
 				assert.Equal(t, "application/json", r.Header.Get("Content-type"))
+				_, err = uuid.Parse(nf.Request.ID)
+				require.NoError(t, err)
+				_, err = time.Parse(time.RFC3339Nano, nf.Request.Date)
+				require.NoError(t, err)
+				nf.Request.ID, nf.Request.Date = "", ""
 				assert.Equal(t, buildNotFoundResponse(Request{Path: "/test", Method: "GET", Headers: make(map[string]string)}, nil), nf)
 			},
 		},
@@ -180,4 +183,38 @@ func TestHealth(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, `{"status": "ok"}`, string(r))
+}
+
+func TestRequestCopiesFiberBuffers(t *testing.T) {
+	var input fiber.Request
+	input.Header.SetMethod("POST")
+	input.SetRequestURI("/original")
+	input.Header.Set("X-Token", "original")
+	input.SetBodyString("original")
+	request := RequestFromFiber(&input)
+	input.Body()[0] = 'x'
+	input.URI().RequestURI()[1] = 'x'
+	input.Header.Method()[0] = 'X'
+	input.Header.Peek("X-Token")[0] = 'x'
+	require.Equal(t, "original", request.Body)
+	require.Equal(t, "/original", request.Path)
+	require.Equal(t, "POST", request.Method)
+	require.Equal(t, "original", request.Headers["x-token"])
+}
+
+func TestMatchedHandlerDoesNotGenerateRequestMetadata(t *testing.T) {
+	app := fiber.New()
+	handler := NewHandler(mockService{func(request Request) MatchResult {
+		require.Empty(t, request.ID)
+		require.Empty(t, request.Date)
+		return MatchResult{Matched: true, StatusCode: http.StatusOK, Body: "matched"}
+	}})
+	app.All("/*", handler.All)
+	response, err := app.Test(httptest.NewRequest("GET", "/matched", nil))
+	require.NoError(t, err)
+	defer response.Body.Close()
+	require.Equal(t, http.StatusOK, response.StatusCode)
+	body, err := io.ReadAll(response.Body)
+	require.NoError(t, err)
+	require.Equal(t, "matched", string(body))
 }

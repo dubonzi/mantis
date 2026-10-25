@@ -59,5 +59,5 @@ func (r *RegexCache) compileAndPut(pattern string) error {
 }
 
 func (r *RegexCache) Match(pattern, value string) bool {
-	return r.cache[pattern].Match([]byte(value))
+	return r.cache[pattern].MatchString(value)
 }

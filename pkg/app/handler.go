@@ -25,12 +25,10 @@ type Request struct {
 
 func RequestFromFiber(r *fiber.Request) Request {
 	req := Request{
-		ID:      uuid.NewString(),
 		Path:    string(r.URI().RequestURI()),
 		Body:    string(r.Body()),
 		Method:  string(r.Header.Method()),
 		Headers: make(map[string]string),
-		Date:    time.Now().Format(time.RFC3339Nano),
 	}
 	r.Header.VisitAll(
 		func(key, value []byte) {
@@ -53,6 +51,13 @@ func (h Handler) All(c *fiber.Ctx) error {
 	res := h.service.MatchRequest(req)
 
 	if !res.Matched {
+		req.ID = uuid.NewString()
+		req.Date = time.Now().Format(time.RFC3339Nano)
+		if body, ok := res.Body.(NotFoundResponse); ok {
+			body.Request.ID = req.ID
+			body.Request.Date = req.Date
+			res.Body = body
+		}
 		log.WithFields(log.Fields{
 			"request": req,
 			"result":  res,

@@ -80,9 +80,10 @@ func NewService(mappings Mappings, matcher *Matcher, scenarioHandler *ScenarioHa
 }
 
 func (s *Service) MatchRequest(r Request) MatchResult {
-	match := s.scenarioHandler.MatchScenario(r)
+	var body jsonBody
+	match := s.scenarioHandler.matchScenario(r, &body)
 	if match.Kind != FullMatch {
-		match = s.matcher.Match(r, s.mappings, nil)
+		match = s.matcher.match(r, s.mappings, nil, &body)
 	}
 
 	result := NewMatchResult(match, r)

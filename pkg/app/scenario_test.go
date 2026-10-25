@@ -434,5 +434,7 @@ func TestAddScenarioRejectsInvalidMappingWithoutMutation(t *testing.T) {
 	assert.Equal(t, map[string]ScenarioState{
 		"unchanged": {CurrentState: "a", States: map[string][]Mapping{"a": {valid}}},
 	}, handler.scenarios)
-	assert.Equal(t, Mappings{"GET": {valid}}, handler.scenarioMappings)
+	expectedMappings := make(Mappings)
+	require.NoError(t, expectedMappings.Put(valid))
+	assert.Equal(t, expectedMappings, handler.scenarioMappings)
 }

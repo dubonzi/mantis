@@ -3,32 +3,31 @@ package main
 import (
 	"context"
 	"os"
-	"os/signal"
 
 	"github.com/americanas-go/log"
 	"go.uber.org/fx"
 )
 
 func main() {
+	os.Exit(run())
+}
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+func run() int {
+	app := fx.New(mainModule())
 
-	app := fx.New(
-		mainModule(),
-	)
-
-	ctx := context.Background()
-
-	err := app.Start(ctx)
-	if err != nil {
-		log.Fatal("error starting app: ", err)
+	startCtx, cancelStart := context.WithTimeout(context.Background(), app.StartTimeout())
+	defer cancelStart()
+	if err := app.Start(startCtx); err != nil {
+		log.Errorf("error starting app: %v", err)
+		return 1
 	}
 
-	<-stop
-	err = app.Stop(ctx)
-	if err != nil {
-		log.Errorf("error stopping app: ", err)
-		os.Exit(1)
+	signal := <-app.Wait()
+	stopCtx, cancelStop := context.WithTimeout(context.Background(), app.StopTimeout())
+	defer cancelStop()
+	if err := app.Stop(stopCtx); err != nil {
+		log.Errorf("error stopping app: %v", err)
+		return 1
 	}
+	return signal.ExitCode
 }

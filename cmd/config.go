@@ -8,6 +8,7 @@ import (
 func loadDefaultConfig() {
 
 	config.Add("server.port", 8080, "Server port")
+	config.Add("server.pprof.enable", false, "Enable profiling endpoints on the health server")
 	config.Add("server.disableStartupMessage", true, "Disable fiber startup message")
 
 	config.Add("health.port", 8081, "Health endpoint port (must not be the same as the server port)")

@@ -23,6 +23,12 @@ func mainModule() fx.Option {
 			context.Background,
 			app.NewHandler,
 			app.NewRegexCache,
+			func() app.LoaderConfig {
+				return app.LoaderConfig{
+					MappingPath:  config.String("loader.path.mapping"),
+					ResponsePath: config.String("loader.path.response"),
+				}
+			},
 			app.NewLoader,
 			app.NewJSONPathCache,
 			app.NewMatcher,

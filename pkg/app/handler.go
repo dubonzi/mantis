@@ -7,7 +7,6 @@ import (
 	"github.com/americanas-go/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/ohler55/ojg/oj"
 )
 
 type ServiceMatcher interface {
@@ -15,12 +14,12 @@ type ServiceMatcher interface {
 }
 
 type Request struct {
-	ID      string            `json:"id"`
+	ID      string            `json:"id,omitempty"`
 	Path    string            `json:"path"`
 	Method  string            `json:"method"`
-	Headers map[string]string `json:"headers"`
-	Body    string            `json:"body"`
-	Date    string            `json:"date"`
+	Headers map[string]string `json:"headers,omitempty"`
+	Body    string            `json:"body,omitempty"`
+	Date    string            `json:"date,omitempty"`
 }
 
 func RequestFromFiber(r *fiber.Request) Request {
@@ -75,7 +74,11 @@ func (h Handler) All(c *fiber.Ctx) error {
 		case string:
 			return c.SendString(b)
 		default:
-			return c.SendString(oj.JSON(b))
+			body, err := encodeJSON(b)
+			if err != nil {
+				return err
+			}
+			return c.SendString(body)
 		}
 	}
 

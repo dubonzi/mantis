@@ -3,8 +3,6 @@ package app
 import (
 	"fmt"
 	"sync"
-
-	"github.com/ohler55/ojg/oj"
 )
 
 const (
@@ -35,7 +33,7 @@ type ScenarioValidationError struct {
 type ScenarioValidationErrors []ScenarioValidationError
 
 func (v ScenarioValidationErrors) Error() string {
-	return fmt.Sprintf("scenario definition is invalid: %s", oj.JSON(v))
+	return fmt.Sprintf("scenario definition is invalid: %s", jsonString(v))
 }
 
 func NewScenarioHandler(matcher *Matcher) *ScenarioHandler {

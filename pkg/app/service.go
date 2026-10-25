@@ -3,8 +3,6 @@ package app
 import (
 	"maps"
 	"net/http"
-
-	"github.com/ohler55/ojg/oj"
 )
 
 const (
@@ -19,10 +17,10 @@ type Service struct {
 }
 
 type MatchResult struct {
-	StatusCode int
-	Headers    map[string]string
-	Body       any
-	Matched    bool
+	StatusCode int               `json:"statusCode"`
+	Headers    map[string]string `json:"headers,omitempty"`
+	Body       any               `json:"body,omitempty"`
+	Matched    bool              `json:"matched"`
 }
 
 func NewMatchResult(match MatchOutcome, r Request) MatchResult {
@@ -61,7 +59,7 @@ func NewMatchResult(match MatchOutcome, r Request) MatchResult {
 }
 
 func (m MatchResult) String() string {
-	return oj.JSON(m)
+	return jsonString(m)
 }
 
 type NotFoundResponse struct {

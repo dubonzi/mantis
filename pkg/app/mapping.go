@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/americanas-go/log"
-	"github.com/ohler55/ojg/oj"
 )
 
 const (
@@ -128,6 +127,10 @@ type BodyMatch struct {
 	JsonPath []string `json:"jsonPath,omitempty"`
 }
 
+func (b BodyMatch) IsZero() bool {
+	return b.Exact == "" && len(b.Contains) == 0 && len(b.Patterns) == 0 && len(b.JsonPath) == 0
+}
+
 func (b BodyMatch) Cost() int {
 	return (len(b.Contains) * ContainsCost) + (len(b.Patterns) * RegexCost) + (len(b.JsonPath) * JsonPathCost)
 }
@@ -136,7 +139,7 @@ type RequestMapping struct {
 	Method  string                 `json:"method"`
 	Path    CommonMatch            `json:"path"`
 	Headers map[string]CommonMatch `json:"headers,omitempty"`
-	Body    BodyMatch              `json:"body,omitempty"`
+	Body    BodyMatch              `json:"body,omitzero"`
 }
 
 func (m RequestMapping) HasPath() bool {
@@ -205,5 +208,5 @@ type ValidationError struct {
 type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
-	return fmt.Sprintf("mapping definition is invalid: %s", oj.JSON(v))
+	return fmt.Sprintf("mapping definition is invalid: %s", jsonString(v))
 }

@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/americanas-go/log"
 	"github.com/ohler55/ojg/oj"
@@ -21,10 +23,27 @@ type Mapping struct {
 	MaxScore int    `json:"-"`
 	Cost     int    `json:"-"`
 	FilePath string `json:"-"`
+
+	pathScore   int
+	headerScore int
+	bodyScore   int
+	headers     []mappingHeader
 }
 
 func (m *Mapping) CalcMaxScoreAndCost() {
-	m.MaxScore = m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
+	m.pathScore = m.Request.PathScore()
+	m.headerScore = m.Request.HeaderScore()
+	m.bodyScore = m.Request.BodyScore()
+	m.MaxScore = m.pathScore + m.headerScore + m.bodyScore
+	m.headers = make([]mappingHeader, 0, len(m.Request.Headers))
+	keys := make([]string, 0, len(m.Request.Headers))
+	for key := range m.Request.Headers {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		m.headers = append(m.headers, mappingHeader{key: strings.ToLower(key), match: m.Request.Headers[key]})
+	}
 
 	var cost int
 
@@ -58,7 +77,18 @@ func (m Mapping) Validate() error {
 	return nil
 }
 
-type Mappings map[string][]Mapping
+type mappingHeader struct {
+	key   string
+	match CommonMatch
+}
+
+type methodMappings struct {
+	entries  []Mapping
+	exact    map[string][]int
+	nonExact []int
+}
+
+type Mappings map[string]*methodMappings
 
 func (m Mappings) Put(mapping Mapping) error {
 	if err := mapping.Validate(); err != nil {
@@ -67,7 +97,19 @@ func (m Mappings) Put(mapping Mapping) error {
 
 	log.Debugf("adding mapping: %+v", mapping)
 
-	m[mapping.Request.Method] = append(m[mapping.Request.Method], mapping)
+	mapping.CalcMaxScoreAndCost()
+	method := m[mapping.Request.Method]
+	if method == nil {
+		method = &methodMappings{exact: make(map[string][]int)}
+		m[mapping.Request.Method] = method
+	}
+	index := len(method.entries)
+	method.entries = append(method.entries, mapping)
+	if path := mapping.Request.Path.Exact; path != "" {
+		method.exact[path] = append(method.exact[path], index)
+	} else {
+		method.nonExact = append(method.nonExact, index)
+	}
 	return nil
 }
 

@@ -72,10 +72,15 @@ func (hand *ScenarioHandler) AddScenario(mapping Mapping) error {
 }
 
 func (hand *ScenarioHandler) MatchScenario(request Request) MatchOutcome {
+	var body jsonBody
+	return hand.matchScenario(request, &body)
+}
+
+func (hand *ScenarioHandler) matchScenario(request Request, body *jsonBody) MatchOutcome {
 	hand.mu.Lock()
 	defer hand.mu.Unlock()
 
-	match := hand.matcher.Match(request, hand.scenarioMappings, hand.scenarios)
+	match := hand.matcher.match(request, hand.scenarioMappings, hand.scenarios, body)
 	if match.Kind != FullMatch || match.Mapping.Scenario == nil {
 		return MatchOutcome{}
 	}

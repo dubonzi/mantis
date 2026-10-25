@@ -153,7 +153,7 @@ func TestMatcher(t *testing.T) {
 	regexCache := NewRegexCache()
 	jsonPathCache := NewJSONPathCache()
 	for _, method := range mappings {
-		for _, mapping := range method {
+		for _, mapping := range method.entries {
 			_ = regexCache.AddFromMapping(mapping)
 			_ = jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
 		}

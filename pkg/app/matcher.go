@@ -4,6 +4,19 @@ import (
 	"strings"
 )
 
+type MatchKind int
+
+const (
+	NoMatch MatchKind = iota
+	PartialMatch
+	FullMatch
+)
+
+type MatchOutcome struct {
+	Mapping Mapping
+	Kind    MatchKind
+}
+
 type Matcher struct {
 	regexCache    *RegexCache
 	jsonPathCache *JSONPathCache
@@ -16,53 +29,63 @@ func NewMatcher(r *RegexCache, j *JSONPathCache) *Matcher {
 	}
 }
 
-func (matcher *Matcher) Match(r Request, mappings Mappings, scenarioStates map[string]ScenarioState) (Mapping, bool, bool) {
-	methodMappings, ok := mappings[r.Method]
-	if !ok {
-		return Mapping{}, false, false
+func (matcher *Matcher) Match(r Request, mappings Mappings, scenarioStates map[string]ScenarioState) MatchOutcome {
+	var body jsonBody
+	return matcher.match(r, mappings, scenarioStates, &body)
+}
+
+func (matcher *Matcher) match(r Request, mappings Mappings, scenarioStates map[string]ScenarioState, body *jsonBody) MatchOutcome {
+	method := mappings[r.Method]
+	if method == nil {
+		return MatchOutcome{}
+	}
+
+	exact, nonExact := method.exact[r.Path], method.nonExact
+	for len(exact) > 0 || len(nonExact) > 0 {
+		var index int
+		if len(exact) > 0 && (len(nonExact) == 0 || exact[0] < nonExact[0]) {
+			index, exact = exact[0], exact[1:]
+		} else {
+			index, nonExact = nonExact[0], nonExact[1:]
+		}
+		mapping := &method.entries[index]
+		if mapping.Scenario != nil && scenarioStates[mapping.Scenario.Name].CurrentState != mapping.Scenario.State {
+			continue
+		}
+		if (mapping.pathScore == 0 || matcher.matchPath(r, mapping)) &&
+			(mapping.headerScore == 0 || matcher.matchHeaders(r, mapping)) &&
+			(mapping.bodyScore == 0 || matcher.matchBody(r, mapping, body)) {
+			return MatchOutcome{Mapping: *mapping, Kind: FullMatch}
+		}
 	}
 
 	bestIndex, bestScore := -1, 0
-
-	for i, mapping := range methodMappings {
-		var score int
-
+	for i := range method.entries {
+		mapping := &method.entries[i]
+		score := 0
 		if matcher.matchPath(r, mapping) {
-			score += mapping.Request.PathScore()
+			score += mapping.pathScore
 		}
-
-		if matcher.matchHeaders(r, mapping) {
-			score += mapping.Request.HeaderScore()
+		if mapping.headerScore > 0 && matcher.matchHeaders(r, mapping) {
+			score += mapping.headerScore
 		}
-
-		if matcher.matchBody(r, mapping) {
-			score += mapping.Request.BodyScore()
+		if mapping.bodyScore > 0 && matcher.matchBody(r, mapping, body) {
+			score += mapping.bodyScore
 		}
-
 		if score == mapping.MaxScore {
-			if mapping.Scenario != nil {
-				sc := scenarioStates[mapping.Scenario.Name]
-				if sc.CurrentState != mapping.Scenario.State {
-					continue
-				}
-			}
-			return mapping, true, false
+			continue
 		}
-
 		if score > bestScore {
-			bestIndex = i
-			bestScore = score
+			bestIndex, bestScore = i, score
 		}
 	}
-
 	if bestIndex >= 0 {
-		return methodMappings[bestIndex], false, true
+		return MatchOutcome{Mapping: method.entries[bestIndex], Kind: PartialMatch}
 	}
-
-	return Mapping{}, false, false
+	return MatchOutcome{}
 }
 
-func (matcher *Matcher) matchPath(r Request, m Mapping) bool {
+func (matcher *Matcher) matchPath(r Request, m *Mapping) bool {
 	if m.Request.Path.Exact != "" {
 		return r.Path == m.Request.Path.Exact
 	}
@@ -82,9 +105,11 @@ func (matcher *Matcher) matchPath(r Request, m Mapping) bool {
 	return true
 }
 
-func (matcher *Matcher) matchHeaders(r Request, m Mapping) bool {
-	for mKey, mVal := range m.Request.Headers {
-		rVal, ok := r.Headers[strings.ToLower(mKey)]
+func (matcher *Matcher) matchHeaders(r Request, m *Mapping) bool {
+	for i := range m.headers {
+		header := &m.headers[i]
+		mVal := &header.match
+		rVal, ok := r.Headers[header.key]
 		if !ok {
 			return false
 		}
@@ -112,7 +137,7 @@ func (matcher *Matcher) matchHeaders(r Request, m Mapping) bool {
 	return true
 }
 
-func (matcher *Matcher) matchBody(r Request, m Mapping) bool {
+func (matcher *Matcher) matchBody(r Request, m *Mapping, body *jsonBody) bool {
 	if m.Request.Body.Exact != "" {
 		return r.Body == m.Request.Body.Exact
 	}
@@ -130,7 +155,7 @@ func (matcher *Matcher) matchBody(r Request, m Mapping) bool {
 	}
 
 	if len(m.Request.Body.JsonPath) > 0 {
-		if !matcher.jsonPathCache.Match(m.Request.Body.JsonPath, r.Body) {
+		if !matcher.jsonPathCache.match(m.Request.Body.JsonPath, r.Body, body) {
 			return false
 		}
 	}

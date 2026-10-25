@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 
 	"github.com/americanas-go/config"
 	"github.com/americanas-go/log"
@@ -20,9 +21,14 @@ func mainModule() fx.Option {
 
 	return fx.Options(
 		fx.Provide(
-			context.Background,
 			app.NewHandler,
 			app.NewRegexCache,
+			func() app.LoaderConfig {
+				return app.LoaderConfig{
+					MappingPath:  config.String("loader.path.mapping"),
+					ResponsePath: config.String("loader.path.response"),
+				}
+			},
 			app.NewLoader,
 			app.NewJSONPathCache,
 			app.NewMatcher,
@@ -39,7 +45,7 @@ func mainModule() fx.Option {
 
 func serverModule() fx.Option {
 	return fx.Invoke(
-		func(lc fx.Lifecycle, ctx context.Context, handler *app.Handler) {
+		func(lc fx.Lifecycle, handler *app.Handler, shutdowner fx.Shutdowner) {
 			srv := fiber.New(
 				fiber.Config{
 					AppName:               "Mantis Server",
@@ -48,22 +54,28 @@ func serverModule() fx.Option {
 			)
 
 			srv.Use("/*", fiberErrorLogger)
-			srv.Use(pprof.New())
 			srv.All("/*", handler.All)
 
 			lc.Append(
 				fx.Hook{
 					OnStart: func(c context.Context) error {
+						ln, err := net.Listen("tcp4", ":"+config.String("server.port"))
+						if err != nil {
+							return fmt.Errorf("error starting mantis server: %w", err)
+						}
 						go func() {
-							if err := srv.Listen(":" + config.String("server.port")); err != nil {
-								panic(fmt.Errorf("error starting mantis server: %s", err))
+							if err := srv.Listener(ln); err != nil {
+								log.Errorf("error serving mantis server: %v", err)
+								if err := shutdowner.Shutdown(fx.ExitCode(1)); err != nil {
+									log.Errorf("error requesting shutdown: %v", err)
+								}
 							}
 						}()
 						return nil
 					},
 					OnStop: func(c context.Context) error {
-						log.Info("Shuting down server")
-						return srv.Shutdown()
+						log.Info("Shutting down server")
+						return srv.ShutdownWithContext(c)
 					},
 				},
 			)
@@ -73,7 +85,7 @@ func serverModule() fx.Option {
 
 func healthModule() fx.Option {
 	return fx.Invoke(
-		func(lc fx.Lifecycle, handler *app.Handler) {
+		func(lc fx.Lifecycle, handler *app.Handler, shutdowner fx.Shutdowner) {
 			srv := fiber.New(
 				fiber.Config{
 					AppName:               "Mantis Health Server",
@@ -81,20 +93,30 @@ func healthModule() fx.Option {
 				},
 			)
 
+			if config.Bool("server.pprof.enable") {
+				srv.Use(pprof.New())
+			}
 			srv.Get("/health", handler.Health)
 
 			lc.Append(
 				fx.Hook{
 					OnStart: func(c context.Context) error {
+						ln, err := net.Listen("tcp4", ":"+config.String("health.port"))
+						if err != nil {
+							return fmt.Errorf("error starting health server: %w", err)
+						}
 						go func() {
-							if err := srv.Listen(":" + config.String("health.port")); err != nil {
-								panic(fmt.Errorf("error starting health server: %s", err))
+							if err := srv.Listener(ln); err != nil {
+								log.Errorf("error serving health server: %v", err)
+								if err := shutdowner.Shutdown(fx.ExitCode(1)); err != nil {
+									log.Errorf("error requesting shutdown: %v", err)
+								}
 							}
 						}()
 						return nil
 					},
 					OnStop: func(c context.Context) error {
-						return srv.Shutdown()
+						return srv.ShutdownWithContext(c)
 					},
 				},
 			)

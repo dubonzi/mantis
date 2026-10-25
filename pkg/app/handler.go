@@ -7,7 +7,6 @@ import (
 	"github.com/americanas-go/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/ohler55/ojg/oj"
 )
 
 type ServiceMatcher interface {
@@ -15,22 +14,20 @@ type ServiceMatcher interface {
 }
 
 type Request struct {
-	ID      string            `json:"id"`
+	ID      string            `json:"id,omitempty"`
 	Path    string            `json:"path"`
 	Method  string            `json:"method"`
-	Headers map[string]string `json:"headers"`
-	Body    string            `json:"body"`
-	Date    string            `json:"date"`
+	Headers map[string]string `json:"headers,omitempty"`
+	Body    string            `json:"body,omitempty"`
+	Date    string            `json:"date,omitempty"`
 }
 
 func RequestFromFiber(r *fiber.Request) Request {
 	req := Request{
-		ID:      uuid.NewString(),
 		Path:    string(r.URI().RequestURI()),
 		Body:    string(r.Body()),
 		Method:  string(r.Header.Method()),
 		Headers: make(map[string]string),
-		Date:    time.Now().Format(time.RFC3339Nano),
 	}
 	r.Header.VisitAll(
 		func(key, value []byte) {
@@ -53,6 +50,13 @@ func (h Handler) All(c *fiber.Ctx) error {
 	res := h.service.MatchRequest(req)
 
 	if !res.Matched {
+		req.ID = uuid.NewString()
+		req.Date = time.Now().Format(time.RFC3339Nano)
+		if body, ok := res.Body.(NotFoundResponse); ok {
+			body.Request.ID = req.ID
+			body.Request.Date = req.Date
+			res.Body = body
+		}
 		log.WithFields(log.Fields{
 			"request": req,
 			"result":  res,
@@ -70,7 +74,11 @@ func (h Handler) All(c *fiber.Ctx) error {
 		case string:
 			return c.SendString(b)
 		default:
-			return c.SendString(oj.JSON(b))
+			body, err := encodeJSON(b)
+			if err != nil {
+				return err
+			}
+			return c.SendString(body)
 		}
 	}
 

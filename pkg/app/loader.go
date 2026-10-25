@@ -1,41 +1,40 @@
 package app
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 
-	"github.com/americanas-go/config"
 	"github.com/americanas-go/log"
-	"github.com/pkg/errors"
-)
-
-var (
-	spaceRegex = regexp.MustCompile(`\s*(.*)\n`)
 )
 
 func FileNotFound(path string) error {
-	return errors.Errorf("file '%s' not found", path)
+	return fmt.Errorf("file '%s' not found", path)
+}
+
+type LoaderConfig struct {
+	MappingPath  string
+	ResponsePath string
 }
 
 type Loader struct {
+	config          LoaderConfig
 	regexCache      *RegexCache
 	jsonPathCache   *JSONPathCache
 	scenarioHandler *ScenarioHandler
 }
 
-func NewLoader(regexCache *RegexCache, jsonPathCache *JSONPathCache, scenarioHandler *ScenarioHandler) *Loader {
-	return &Loader{regexCache, jsonPathCache, scenarioHandler}
+func NewLoader(config LoaderConfig, regexCache *RegexCache, jsonPathCache *JSONPathCache, scenarioHandler *ScenarioHandler) *Loader {
+	return &Loader{config, regexCache, jsonPathCache, scenarioHandler}
 }
 
 func (loader *Loader) GetMappings() (Mappings, error) {
-	mappingsPath := config.String("loader.path.mapping")
-	responsesPath := config.String("loader.path.response")
-
 	mappings := make(Mappings)
-	err := loader.loadMappings(mappingsPath, responsesPath, mappings)
+	err := loader.loadMappings(loader.config.MappingPath, loader.config.ResponsePath, mappings)
 	if err != nil {
 		return mappings, err
 	}
@@ -47,6 +46,9 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 	err := filepath.WalkDir(
 		mappingsPath,
 		func(filePath string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return fmt.Errorf("error walking mapping path %q: %w", filePath, err)
+			}
 			if d != nil && !d.IsDir() {
 				log.Debugf("reading file '%s'", filePath)
 				loaded, err := loader.decodeMapping(filePath)
@@ -57,15 +59,18 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 				for _, mapping := range loaded {
 					err := loader.processMapping(&mapping, filePath, responsesPath)
 					if err != nil {
-						return errors.Wrapf(err, "error processing file [ %s ]", filePath)
+						return fmt.Errorf("error processing file [ %s ]: %w", filePath, err)
 					}
 
 					if mapping.Scenario != nil {
-						loader.scenarioHandler.AddScenario(mapping)
+						err = loader.scenarioHandler.AddScenario(mapping)
+						if err != nil {
+							return fmt.Errorf("error adding mapping from file [ %s ]: %w", filePath, err)
+						}
 					} else {
 						err = mappings.Put(mapping)
 						if err != nil {
-							return errors.Wrapf(err, "error adding mapping from file [ %s ]", filePath)
+							return fmt.Errorf("error adding mapping from file [ %s ]: %w", filePath, err)
 						}
 					}
 
@@ -81,7 +86,7 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 
 	err = loader.scenarioHandler.ValidateScenarioStates()
 	if err != nil {
-		return errors.Wrapf(err, "invalid scenario states")
+		return fmt.Errorf("invalid scenario states: %w", err)
 	}
 
 	log.Info("mappings loaded successfully")
@@ -104,9 +109,6 @@ func (*Loader) decodeMapping(path string) ([]Mapping, error) {
 		}
 		mappings = append(mappings, m)
 	}
-	for _, m := range mappings {
-		m.FilePath = path
-	}
 
 	return mappings, nil
 }
@@ -117,7 +119,7 @@ func loadFile(path string) ([]byte, error) {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, FileNotFound(path)
 		}
-		return nil, errors.Wrapf(err, "error reading file '%s'", path)
+		return nil, fmt.Errorf("error reading file '%s': %w", path, err)
 	}
 	return content, nil
 }
@@ -126,19 +128,23 @@ func (loader Loader) processMapping(mapping *Mapping, filePath, responsesPath st
 	if mapping.Response.BodyFile != "" {
 		bodyContent, err := loadFile(filepath.Join(responsesPath, mapping.Response.BodyFile))
 		if err != nil {
-			return errors.Wrap(err, "error loading response body file for mapping")
+			return fmt.Errorf("error loading response body file for mapping: %w", err)
 		}
-		mapping.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
+		var compacted bytes.Buffer
+		if err := json.Compact(&compacted, bodyContent); err == nil {
+			bodyContent = compacted.Bytes()
+		}
+		mapping.Response.Body = string(bodyContent)
 	}
 
 	err := loader.regexCache.AddFromMapping(*mapping)
 	if err != nil {
-		return errors.Wrap(err, "error adding mapping from")
+		return fmt.Errorf("error compiling regex patterns: %w", err)
 	}
 
 	err = loader.jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
 	if err != nil {
-		return errors.Wrap(err, "error adding mapping from")
+		return fmt.Errorf("error parsing jsonpath expressions: %w", err)
 	}
 
 	mapping.CalcMaxScoreAndCost()

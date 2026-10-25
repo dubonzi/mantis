@@ -1,9 +1,8 @@
 package app
 
 import (
+	"fmt"
 	"regexp"
-
-	"github.com/pkg/errors"
 )
 
 type RegexCache struct {
@@ -21,14 +20,14 @@ func (r *RegexCache) AddFromMapping(mapping Mapping) error {
 	for _, p := range mapping.Request.Path.Patterns {
 		err = r.compileAndPut(p)
 		if err != nil {
-			return errors.Wrapf(err, "failed to compile path regex with pattern:  %s ", p)
+			return fmt.Errorf("failed to compile path regex with pattern:  %s : %w", p, err)
 		}
 	}
 
 	for _, p := range mapping.Request.Body.Patterns {
 		err = r.compileAndPut(p)
 		if err != nil {
-			return errors.Wrapf(err, "failed to compile body regex with pattern:  %s ", p)
+			return fmt.Errorf("failed to compile body regex with pattern:  %s : %w", p, err)
 		}
 	}
 
@@ -36,7 +35,7 @@ func (r *RegexCache) AddFromMapping(mapping Mapping) error {
 		for _, p := range value.Patterns {
 			err = r.compileAndPut(p)
 			if err != nil {
-				return errors.Wrapf(err, "failed to compile header regex with pattern: %s ", value.Patterns)
+				return fmt.Errorf("failed to compile header regex with pattern: %s : %w", value.Patterns, err)
 			}
 		}
 	}
@@ -59,5 +58,5 @@ func (r *RegexCache) compileAndPut(pattern string) error {
 }
 
 func (r *RegexCache) Match(pattern, value string) bool {
-	return r.cache[pattern].Match([]byte(value))
+	return r.cache[pattern].MatchString(value)
 }

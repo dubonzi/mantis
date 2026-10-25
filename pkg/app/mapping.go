@@ -2,9 +2,10 @@ package app
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/americanas-go/log"
-	"github.com/ohler55/ojg/oj"
 )
 
 const (
@@ -21,10 +22,27 @@ type Mapping struct {
 	MaxScore int    `json:"-"`
 	Cost     int    `json:"-"`
 	FilePath string `json:"-"`
+
+	pathScore   int
+	headerScore int
+	bodyScore   int
+	headers     []mappingHeader
 }
 
 func (m *Mapping) CalcMaxScoreAndCost() {
-	m.MaxScore = m.Request.PathScore() + m.Request.HeaderScore() + m.Request.BodyScore()
+	m.pathScore = m.Request.PathScore()
+	m.headerScore = m.Request.HeaderScore()
+	m.bodyScore = m.Request.BodyScore()
+	m.MaxScore = m.pathScore + m.headerScore + m.bodyScore
+	m.headers = make([]mappingHeader, 0, len(m.Request.Headers))
+	keys := make([]string, 0, len(m.Request.Headers))
+	for key := range m.Request.Headers {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		m.headers = append(m.headers, mappingHeader{key: strings.ToLower(key), match: m.Request.Headers[key]})
+	}
 
 	var cost int
 
@@ -58,7 +76,18 @@ func (m Mapping) Validate() error {
 	return nil
 }
 
-type Mappings map[string][]Mapping
+type mappingHeader struct {
+	key   string
+	match CommonMatch
+}
+
+type methodMappings struct {
+	entries  []Mapping
+	exact    map[string][]int
+	nonExact []int
+}
+
+type Mappings map[string]*methodMappings
 
 func (m Mappings) Put(mapping Mapping) error {
 	if err := mapping.Validate(); err != nil {
@@ -67,16 +96,18 @@ func (m Mappings) Put(mapping Mapping) error {
 
 	log.Debugf("adding mapping: %+v", mapping)
 
-	m[mapping.Request.Method] = append(m[mapping.Request.Method], mapping)
-	return nil
-}
-
-func (m Mappings) PutAll(mappings []Mapping) error {
-	for _, mapping := range mappings {
-		err := m.Put(mapping)
-		if err != nil {
-			return err
-		}
+	mapping.CalcMaxScoreAndCost()
+	method := m[mapping.Request.Method]
+	if method == nil {
+		method = &methodMappings{exact: make(map[string][]int)}
+		m[mapping.Request.Method] = method
+	}
+	index := len(method.entries)
+	method.entries = append(method.entries, mapping)
+	if path := mapping.Request.Path.Exact; path != "" {
+		method.exact[path] = append(method.exact[path], index)
+	} else {
+		method.nonExact = append(method.nonExact, index)
 	}
 	return nil
 }
@@ -96,6 +127,10 @@ type BodyMatch struct {
 	JsonPath []string `json:"jsonPath,omitempty"`
 }
 
+func (b BodyMatch) IsZero() bool {
+	return b.Exact == "" && len(b.Contains) == 0 && len(b.Patterns) == 0 && len(b.JsonPath) == 0
+}
+
 func (b BodyMatch) Cost() int {
 	return (len(b.Contains) * ContainsCost) + (len(b.Patterns) * RegexCost) + (len(b.JsonPath) * JsonPathCost)
 }
@@ -104,7 +139,7 @@ type RequestMapping struct {
 	Method  string                 `json:"method"`
 	Path    CommonMatch            `json:"path"`
 	Headers map[string]CommonMatch `json:"headers,omitempty"`
-	Body    BodyMatch              `json:"body,omitempty"`
+	Body    BodyMatch              `json:"body,omitzero"`
 }
 
 func (m RequestMapping) HasPath() bool {
@@ -173,5 +208,5 @@ type ValidationError struct {
 type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
-	return fmt.Sprintf("mapping definition is invalid: %s", oj.JSON(v))
+	return fmt.Sprintf("mapping definition is invalid: %s", jsonString(v))
 }

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,8 +10,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/ohler55/ojg/alt"
-	"github.com/ohler55/ojg/oj"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -78,10 +77,8 @@ func TestRequest(t *testing.T) {
 			assert.Equal(t, tt.want.Path, got.Path)
 			assert.Equal(t, tt.want.Headers, got.Headers)
 			assert.Equal(t, tt.want.Body, got.Body)
-			_, err := uuid.Parse(got.ID)
-			assert.NoError(t, err)
-			_, err = time.Parse(time.RFC3339Nano, got.Date)
-			assert.NoError(t, err)
+			assert.Empty(t, got.ID)
+			assert.Empty(t, got.Date)
 		})
 	}
 
@@ -112,14 +109,20 @@ func TestHandleResponse(t *testing.T) {
 				}
 			},
 			assertFunc: func(t *testing.T, r *http.Response) {
-				body, err := oj.Load(r.Body)
+				body, err := io.ReadAll(r.Body)
 				require.NoError(t, err)
 				var nf NotFoundResponse
-				_, err = alt.Recompose(body, &nf)
+				err = json.Unmarshal(body, &nf)
 				require.NoError(t, err)
+				assert.NotContains(t, string(body), `"closestMapping"`)
 				assert.Equal(t, http.StatusNotFound, r.StatusCode)
 				assert.Equal(t, "application/json", r.Header.Get("Content-type"))
-				assert.Equal(t, buildNotFoundResponse(Request{Path: "/test", Method: "GET", Headers: make(map[string]string)}, nil), nf)
+				_, err = uuid.Parse(nf.Request.ID)
+				require.NoError(t, err)
+				_, err = time.Parse(time.RFC3339Nano, nf.Request.Date)
+				require.NoError(t, err)
+				nf.Request.ID, nf.Request.Date = "", ""
+				assert.Equal(t, buildNotFoundResponse(Request{Path: "/test", Method: "GET", Headers: nil}, nil), nf)
 			},
 		},
 		{
@@ -180,4 +183,107 @@ func TestHealth(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, `{"status": "ok"}`, string(r))
+}
+
+func TestRequestCopiesFiberBuffers(t *testing.T) {
+	var input fiber.Request
+	input.Header.SetMethod("POST")
+	input.SetRequestURI("/original")
+	input.Header.Set("X-Token", "original")
+	input.SetBodyString("original")
+	request := RequestFromFiber(&input)
+	input.Body()[0] = 'x'
+	input.URI().RequestURI()[1] = 'x'
+	input.Header.Method()[0] = 'X'
+	input.Header.Peek("X-Token")[0] = 'x'
+	require.Equal(t, "original", request.Body)
+	require.Equal(t, "/original", request.Path)
+	require.Equal(t, "POST", request.Method)
+	require.Equal(t, "original", request.Headers["x-token"])
+}
+
+func TestMatchedHandlerDoesNotGenerateRequestMetadata(t *testing.T) {
+	app := fiber.New()
+	handler := NewHandler(mockService{func(request Request) MatchResult {
+		require.Empty(t, request.ID)
+		require.Empty(t, request.Date)
+		return MatchResult{Matched: true, StatusCode: http.StatusOK, Body: "matched"}
+	}})
+	app.All("/*", handler.All)
+	response, err := app.Test(httptest.NewRequest("GET", "/matched", nil))
+	require.NoError(t, err)
+	defer response.Body.Close()
+	require.Equal(t, http.StatusOK, response.StatusCode)
+	body, err := io.ReadAll(response.Body)
+	require.NoError(t, err)
+	require.Equal(t, "matched", string(body))
+}
+
+func TestNotFoundClosestMappingJSON(t *testing.T) {
+	tests := []struct {
+		name string
+		body BodyMatch
+		want string
+	}{
+		{
+			name: "Should omit absent body conditions",
+			want: `{"method":"GET","path":{"pattern":["^/expected/<tag>&$"]},"headers":{"accept":{"exact":"application/json"}}}`,
+		},
+		{
+			name: "Should omit allocated empty body conditions",
+			body: BodyMatch{CommonMatch: CommonMatch{Contains: []string{}, Patterns: []string{}}, JsonPath: []string{}},
+			want: `{"method":"GET","path":{"pattern":["^/expected/<tag>&$"]},"headers":{"accept":{"exact":"application/json"}}}`,
+		},
+		{
+			name: "Should flatten embedded body conditions",
+			body: BodyMatch{CommonMatch: CommonMatch{Contains: []string{"<tag>&"}, Patterns: []string{"<tag>&"}}, JsonPath: []string{"$.marker"}},
+			want: `{"method":"GET","path":{"pattern":["^/expected/<tag>&$"]},"headers":{"accept":{"exact":"application/json"}},"body":{"contains":["<tag>&"],"pattern":["<tag>&"],"jsonPath":["$.marker"]}}`,
+		},
+		{
+			name: "Should retain exact body conditions",
+			body: BodyMatch{CommonMatch: CommonMatch{Exact: "<tag>&"}},
+			want: `{"method":"GET","path":{"pattern":["^/expected/<tag>&$"]},"headers":{"accept":{"exact":"application/json"}},"body":{"exact":"<tag>&"}}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mapping := Mapping{Request: RequestMapping{
+				Method:  "GET",
+				Path:    CommonMatch{Patterns: []string{"^/expected/<tag>&$"}},
+				Headers: map[string]CommonMatch{"accept": {Exact: "application/json"}},
+				Body:    tt.body,
+			}}
+			regex, jsonPath := NewRegexCache(), NewJSONPathCache()
+			require.NoError(t, regex.AddFromMapping(mapping))
+			require.NoError(t, jsonPath.AddExpressions(mapping.Request.Body.JsonPath))
+			mappings := make(Mappings)
+			require.NoError(t, mappings.Put(mapping))
+			matcher := NewMatcher(regex, jsonPath)
+			service := NewService(mappings, matcher, NewScenarioHandler(matcher), NewResponseDelayer())
+			app := fiber.New()
+			app.All("/*", NewHandler(service).All)
+			request := httptest.NewRequest("GET", "/missing", nil)
+			request.Header.Set("Accept", "application/json")
+
+			response, err := app.Test(request)
+			require.NoError(t, err)
+			defer response.Body.Close()
+			require.Equal(t, http.StatusNotFound, response.StatusCode)
+			assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
+			body, err := io.ReadAll(response.Body)
+			require.NoError(t, err)
+			var output struct {
+				ClosestMapping json.RawMessage            `json:"closestMapping"`
+				Request        map[string]json.RawMessage `json:"request"`
+			}
+			require.NoError(t, json.Unmarshal(body, &output))
+			assert.JSONEq(t, tt.want, string(output.ClosestMapping))
+			assert.NotContains(t, output.Request, "body")
+			assert.Contains(t, string(body), "<tag>&")
+			assert.NotContains(t, string(body), `\u003c`)
+			assert.NotContains(t, string(body), `\u003e`)
+			assert.NotContains(t, string(body), `\u0026`)
+		})
+	}
 }

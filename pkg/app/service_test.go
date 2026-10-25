@@ -1,10 +1,12 @@
 package app
 
 import (
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type mockDelayer struct {
@@ -75,4 +77,74 @@ func TestService(t *testing.T) {
 		})
 	}
 
+}
+
+func TestServiceConcurrentResponseHeaders(t *testing.T) {
+	mapping := Mapping{
+		Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/headers"}},
+		Response: ResponseMapping{StatusCode: 200, Headers: map[string]string{"Content-Type": "text/plain"}},
+		FilePath: "headers.json",
+	}
+	mapping.CalcMaxScoreAndCost()
+	mappings := make(Mappings)
+	require.NoError(t, mappings.Put(mapping))
+	matcher := NewMatcher(NewRegexCache(), NewJSONPathCache())
+	service := NewService(mappings, matcher, NewScenarioHandler(matcher), &mockDelayer{})
+	results := concurrentServiceRequests(service, Request{Method: "GET", Path: "/headers"}, 32)
+	for _, result := range results {
+		require.True(t, result.Matched)
+		assert.Equal(t, "headers.json", result.Headers["X-Mapping-File"])
+		assert.Equal(t, "text/plain", result.Headers["Content-Type"])
+	}
+	assert.Equal(t, map[string]string{"Content-Type": "text/plain"}, mapping.Response.Headers)
+	results[0].Headers["Content-Type"] = "changed"
+	assert.Equal(t, "text/plain", results[1].Headers["Content-Type"])
+	assert.Equal(t, "text/plain", mapping.Response.Headers["Content-Type"])
+}
+
+func TestServiceConcurrentScenarioTransitions(t *testing.T) {
+	matcher := NewMatcher(NewRegexCache(), NewJSONPathCache())
+	handler := NewScenarioHandler(matcher)
+	for _, scenario := range []ScenarioMapping{
+		{Name: "cycle", State: "a", StartingState: true, NewState: "b"},
+		{Name: "cycle", State: "b", NewState: "a"},
+	} {
+		mapping := Mapping{
+			Scenario: &scenario,
+			Request:  RequestMapping{Method: "GET", Path: CommonMatch{Exact: "/cycle"}},
+			Response: ResponseMapping{StatusCode: 200, Body: scenario.State},
+		}
+		mapping.CalcMaxScoreAndCost()
+		require.NoError(t, handler.AddScenario(mapping))
+	}
+	require.NoError(t, handler.ValidateScenarioStates())
+	service := NewService(make(Mappings), matcher, handler, &mockDelayer{})
+	const requests = 101
+	results := concurrentServiceRequests(service, Request{Method: "GET", Path: "/cycle"}, requests)
+	counts := map[any]int{}
+	for _, result := range results {
+		require.True(t, result.Matched)
+		counts[result.Body]++
+	}
+	assert.Equal(t, map[any]int{"a": 51, "b": 50}, counts)
+	assert.Equal(t, "b", handler.scenarios["cycle"].CurrentState)
+	assert.Equal(t, "b", service.MatchRequest(Request{Method: "GET", Path: "/cycle"}).Body)
+	assert.Equal(t, "a", handler.scenarios["cycle"].CurrentState)
+}
+
+func concurrentServiceRequests(service *Service, request Request, count int) []MatchResult {
+	results := make([]MatchResult, count)
+	start := make(chan struct{})
+	var workers sync.WaitGroup
+	for i := range results {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			<-start
+			results[i] = service.MatchRequest(request)
+		}()
+	}
+	close(start)
+	workers.Wait()
+	return results
 }

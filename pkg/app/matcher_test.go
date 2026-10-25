@@ -163,15 +163,13 @@ func TestMatcher(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mapping, matched, partial := matcher.Match(tt.input, mappings, nil)
+			match := matcher.Match(tt.input, mappings, nil)
 
-			result := NewMatchResult(&mapping, tt.input, matched, partial)
+			result := NewMatchResult(match, tt.input)
 
-			if tt.wantMatch {
-				require.Equal(t, tt.wantMatch, matched)
-			}
+			require.Equal(t, tt.wantMatch, match.Kind == FullMatch)
 			if tt.wantPartial {
-				require.Equal(t, tt.wantPartial, partial)
+				require.Equal(t, tt.wantPartial, match.Kind == PartialMatch)
 			}
 
 			if tt.wantMatch || tt.wantPartial {
@@ -311,6 +309,8 @@ func getMappings() Mappings {
 	}
 
 	ms := make(Mappings)
-	_ = ms.PutAll(mappings)
+	for _, mapping := range mappings {
+		_ = ms.Put(mapping)
+	}
 	return ms
 }

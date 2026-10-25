@@ -71,16 +71,6 @@ func (m Mappings) Put(mapping Mapping) error {
 	return nil
 }
 
-func (m Mappings) PutAll(mappings []Mapping) error {
-	for _, mapping := range mappings {
-		err := m.Put(mapping)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 type CommonMatch struct {
 	Exact    string   `json:"exact,omitempty"`
 	Contains []string `json:"contains,omitempty"`

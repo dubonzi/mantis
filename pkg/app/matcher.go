@@ -4,6 +4,19 @@ import (
 	"strings"
 )
 
+type MatchKind int
+
+const (
+	NoMatch MatchKind = iota
+	PartialMatch
+	FullMatch
+)
+
+type MatchOutcome struct {
+	Mapping Mapping
+	Kind    MatchKind
+}
+
 type Matcher struct {
 	regexCache    *RegexCache
 	jsonPathCache *JSONPathCache
@@ -16,10 +29,10 @@ func NewMatcher(r *RegexCache, j *JSONPathCache) *Matcher {
 	}
 }
 
-func (matcher *Matcher) Match(r Request, mappings Mappings, scenarioStates map[string]ScenarioState) (Mapping, bool, bool) {
+func (matcher *Matcher) Match(r Request, mappings Mappings, scenarioStates map[string]ScenarioState) MatchOutcome {
 	methodMappings, ok := mappings[r.Method]
 	if !ok {
-		return Mapping{}, false, false
+		return MatchOutcome{}
 	}
 
 	bestIndex, bestScore := -1, 0
@@ -46,7 +59,7 @@ func (matcher *Matcher) Match(r Request, mappings Mappings, scenarioStates map[s
 					continue
 				}
 			}
-			return mapping, true, false
+			return MatchOutcome{Mapping: mapping, Kind: FullMatch}
 		}
 
 		if score > bestScore {
@@ -56,10 +69,10 @@ func (matcher *Matcher) Match(r Request, mappings Mappings, scenarioStates map[s
 	}
 
 	if bestIndex >= 0 {
-		return methodMappings[bestIndex], false, true
+		return MatchOutcome{Mapping: methodMappings[bestIndex], Kind: PartialMatch}
 	}
 
-	return Mapping{}, false, false
+	return MatchOutcome{}
 }
 
 func (matcher *Matcher) matchPath(r Request, m Mapping) bool {

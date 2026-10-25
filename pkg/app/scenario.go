@@ -2,23 +2,26 @@ package app
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/ohler55/ojg/oj"
 )
 
 const (
-	ScenarioMultipleStartingStateMessage = "the scenario has multiple starting states defined"
-	ScenarioNoStartingStateMessage       = "the scenario has no starting state defined"
-	ScenarioInvalidStateNameMessage      = "the scenario has a state pointing to a new state that is not defined in the scenario: [%s -> %s]"
-	ScenarioSingleStateMessage           = "the scenario must have at least 2 defined states"
+	ScenarioMultipleStartingStateMessage     = "the scenario has multiple starting states defined"
+	ScenarioNoStartingStateMessage           = "the scenario has no starting state defined"
+	ScenarioInvalidStateNameMessage          = "the scenario has a state pointing to a new state that is not defined in the scenario: [%s -> %s]"
+	ScenarioInconsistentStartingStateMessage = "the scenario has mappings with inconsistent startingState values for state: [%s]"
+	ScenarioSingleStateMessage               = "the scenario must have at least 2 defined states"
 )
 
 type ScenarioState struct {
 	CurrentState string
-	States       map[string]Mapping
+	States       map[string][]Mapping
 }
 
 type ScenarioHandler struct {
+	mu               sync.Mutex
 	matcher          *Matcher
 	scenarioMappings Mappings
 	scenarios        map[string]ScenarioState
@@ -43,81 +46,88 @@ func NewScenarioHandler(matcher *Matcher) *ScenarioHandler {
 	}
 }
 
-func (hand *ScenarioHandler) AddScenario(mapping Mapping) {
-
+func (hand *ScenarioHandler) AddScenario(mapping Mapping) error {
 	if mapping.Scenario == nil {
-		return
+		return nil
+	}
+
+	hand.mu.Lock()
+	defer hand.mu.Unlock()
+
+	if err := hand.scenarioMappings.Put(mapping); err != nil {
+		return err
 	}
 
 	scMapping := mapping.Scenario
-
 	sc, scenarioOk := hand.scenarios[scMapping.Name]
 	if !scenarioOk {
-		sc = ScenarioState{CurrentState: scMapping.State}
+		sc = ScenarioState{CurrentState: scMapping.State, States: make(map[string][]Mapping)}
 	}
-
-	if len(sc.States) == 0 {
-		sc.States = make(map[string]Mapping)
-	}
-
 	if scMapping.StartingState {
 		sc.CurrentState = scMapping.State
 	}
-
-	sc.States[scMapping.State] = mapping
-
+	sc.States[scMapping.State] = append(sc.States[scMapping.State], mapping)
 	hand.scenarios[scMapping.Name] = sc
-	hand.scenarioMappings.Put(mapping)
+	return nil
 }
 
-func (hand *ScenarioHandler) MatchScenario(request Request) (Mapping, bool, bool) {
-	mapping, matched, partial := hand.matcher.Match(request, hand.scenarioMappings, hand.scenarios)
-	if !matched || partial {
-		return Mapping{}, false, false
+func (hand *ScenarioHandler) MatchScenario(request Request) MatchOutcome {
+	hand.mu.Lock()
+	defer hand.mu.Unlock()
+
+	match := hand.matcher.Match(request, hand.scenarioMappings, hand.scenarios)
+	if match.Kind != FullMatch || match.Mapping.Scenario == nil {
+		return MatchOutcome{}
 	}
 
-	if mapping.Scenario == nil {
-		return Mapping{}, false, false
+	scenario := match.Mapping.Scenario
+	if scenario.NewState != "" {
+		state := hand.scenarios[scenario.Name]
+		state.CurrentState = scenario.NewState
+		hand.scenarios[scenario.Name] = state
 	}
-	state := hand.scenarios[mapping.Scenario.Name]
-	if mapping.Scenario.State != state.CurrentState {
-		return Mapping{}, false, true
-	}
-	result := state.States[state.CurrentState]
-	if result.Scenario.NewState != "" {
-		state.CurrentState = result.Scenario.NewState
-		hand.scenarios[mapping.Scenario.Name] = state
-	}
-	return result, true, false
+	return match
 }
 
 // Validates the following:
 //
-//   - Each scenario has exactly one starting state
+//   - Each scenario has exactly one distinct starting state
+//   - Mappings in the same state agree on startingState
 //   - Each scenario has at least 2 states
 //   - State names are valid inside each scenario
 func (hand *ScenarioHandler) ValidateScenarioStates() error {
+	hand.mu.Lock()
+	defer hand.mu.Unlock()
 	errors := make(ScenarioValidationErrors, 0)
 
 	for k, v := range hand.scenarios {
-		startingStates := []string{}
-		for _, s := range v.States {
-			if s.Scenario.StartingState {
-				startingStates = append(startingStates, s.Scenario.State)
-			}
-
-			if s.Scenario.NewState != "" {
-				if _, ok := v.States[s.Scenario.NewState]; !ok {
-					errors = append(errors, ScenarioValidationError{k, fmt.Sprintf(ScenarioInvalidStateNameMessage, s.Scenario.State, s.Scenario.NewState)})
+		startingStates := 0
+		for stateName, mappings := range v.States {
+			starting, inconsistent := false, false
+			for _, mapping := range mappings {
+				s := mapping.Scenario
+				starting = starting || s.StartingState
+				if s.StartingState != mappings[0].Scenario.StartingState {
+					inconsistent = true
+				}
+				if s.NewState != "" {
+					if _, ok := v.States[s.NewState]; !ok {
+						errors = append(errors, ScenarioValidationError{k, fmt.Sprintf(ScenarioInvalidStateNameMessage, s.State, s.NewState)})
+					}
 				}
 			}
+			if starting {
+				startingStates++
+			}
+			if inconsistent {
+				errors = append(errors, ScenarioValidationError{k, fmt.Sprintf(ScenarioInconsistentStartingStateMessage, stateName)})
+			}
 		}
 
-		if len(startingStates) == 0 {
+		if startingStates == 0 {
 			errors = append(errors, ScenarioValidationError{k, ScenarioNoStartingStateMessage})
 		}
-
-		if len(startingStates) > 1 {
+		if startingStates > 1 {
 			errors = append(errors, ScenarioValidationError{k, ScenarioMultipleStartingStateMessage})
 		}
 

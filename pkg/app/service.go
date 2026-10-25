@@ -1,6 +1,7 @@
 package app
 
 import (
+	"maps"
 	"net/http"
 
 	"github.com/ohler55/ojg/oj"
@@ -18,20 +19,20 @@ type Service struct {
 }
 
 type MatchResult struct {
-	StatusCode  int
-	Headers     map[string]string
-	Body        any
-	Matched     bool
-	MappingFile string
+	StatusCode int
+	Headers    map[string]string
+	Body       any
+	Matched    bool
 }
 
-func NewMatchResult(mapping *Mapping, r Request, matched bool, partial bool) MatchResult {
+func NewMatchResult(match MatchOutcome, r Request) MatchResult {
+	mapping := match.Mapping
 	result := MatchResult{
-		Matched: matched,
+		Matched: match.Kind == FullMatch,
 		Headers: make(map[string]string),
 	}
 
-	if partial {
+	if match.Kind == PartialMatch {
 		result.Body = buildNotFoundResponse(r, &mapping.Request)
 		result.StatusCode = http.StatusNotFound
 		result.Headers["Content-type"] = "application/json"
@@ -39,7 +40,7 @@ func NewMatchResult(mapping *Mapping, r Request, matched bool, partial bool) Mat
 		return result
 	}
 
-	if !matched {
+	if match.Kind != FullMatch {
 		result.StatusCode = http.StatusNotFound
 		result.Body = buildNotFoundResponse(r, nil)
 		result.Headers["Content-type"] = "application/json"
@@ -50,7 +51,7 @@ func NewMatchResult(mapping *Mapping, r Request, matched bool, partial bool) Mat
 		result.Body = mapping.Response.Body
 	}
 	result.StatusCode = mapping.Response.StatusCode
-	result.Headers = mapping.Response.Headers
+	result.Headers = maps.Clone(mapping.Response.Headers)
 	if result.Headers == nil {
 		result.Headers = make(map[string]string)
 	}
@@ -79,18 +80,15 @@ func NewService(mappings Mappings, matcher *Matcher, scenarioHandler *ScenarioHa
 }
 
 func (s *Service) MatchRequest(r Request) MatchResult {
-	var mapping Mapping
-	var matched, partial bool
-
-	mapping, matched, partial = s.scenarioHandler.MatchScenario(r)
-	if !matched {
-		mapping, matched, partial = s.matcher.Match(r, s.mappings, nil)
+	match := s.scenarioHandler.MatchScenario(r)
+	if match.Kind != FullMatch {
+		match = s.matcher.Match(r, s.mappings, nil)
 	}
 
-	result := NewMatchResult(&mapping, r, matched, partial)
+	result := NewMatchResult(match, r)
 
-	if matched {
-		s.delayer.Apply(&mapping.Response.ResponseDelay)
+	if match.Kind == FullMatch {
+		s.delayer.Apply(&match.Mapping.Response.ResponseDelay)
 	}
 
 	return result

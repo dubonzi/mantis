@@ -61,7 +61,10 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 					}
 
 					if mapping.Scenario != nil {
-						loader.scenarioHandler.AddScenario(mapping)
+						err = loader.scenarioHandler.AddScenario(mapping)
+						if err != nil {
+							return errors.Wrapf(err, "error adding mapping from file [ %s ]", filePath)
+						}
 					} else {
 						err = mappings.Put(mapping)
 						if err != nil {

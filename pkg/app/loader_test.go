@@ -207,9 +207,13 @@ var (
 
 func TestGetMappings(t *testing.T) {
 	wantMappings := make(Mappings)
-	_ = wantMappings.PutAll(validLoaderMappings)
+	for _, mapping := range validLoaderMappings {
+		require.NoError(t, wantMappings.Put(mapping))
+	}
 	wantScenarioMappings := make(Mappings)
-	_ = wantScenarioMappings.PutAll(validScenarioMappings)
+	for _, mapping := range validScenarioMappings {
+		require.NoError(t, wantScenarioMappings.Put(mapping))
+	}
 
 	tests := []struct {
 		name                 string
@@ -313,7 +317,9 @@ func TestDecodeFile(t *testing.T) {
 
 func TestLoadMappings(t *testing.T) {
 	wantMappings := make(Mappings)
-	_ = wantMappings.PutAll(validLoaderMappings)
+	for _, mapping := range validLoaderMappings {
+		require.NoError(t, wantMappings.Put(mapping))
+	}
 
 	tests := []struct {
 		name          string

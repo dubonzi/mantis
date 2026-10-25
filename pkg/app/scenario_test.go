@@ -361,7 +361,7 @@ func TestLoaderRejectsInvalidScenarioMapping(t *testing.T) {
  {"scenario":{"name":"invalid","state":"b","newState":"a"},"request":{"method":"GET","path":{"exact":"/valid"}}}
  ]`), 0600))
 	handler := NewScenarioHandler(NewMatcher(NewRegexCache(), NewJSONPathCache()))
-	loader := NewLoader(NewRegexCache(), NewJSONPathCache(), handler)
+	loader := NewLoader(LoaderConfig{MappingPath: directory, ResponsePath: directory}, NewRegexCache(), NewJSONPathCache(), handler)
 	err := loader.loadMappings(directory, directory, make(Mappings))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), path)

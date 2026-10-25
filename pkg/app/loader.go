@@ -1,41 +1,39 @@
 package app
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 
-	"github.com/americanas-go/config"
 	"github.com/americanas-go/log"
 	"github.com/pkg/errors"
-)
-
-var (
-	spaceRegex = regexp.MustCompile(`\s*(.*)\n`)
 )
 
 func FileNotFound(path string) error {
 	return errors.Errorf("file '%s' not found", path)
 }
 
+type LoaderConfig struct {
+	MappingPath  string
+	ResponsePath string
+}
+
 type Loader struct {
+	config          LoaderConfig
 	regexCache      *RegexCache
 	jsonPathCache   *JSONPathCache
 	scenarioHandler *ScenarioHandler
 }
 
-func NewLoader(regexCache *RegexCache, jsonPathCache *JSONPathCache, scenarioHandler *ScenarioHandler) *Loader {
-	return &Loader{regexCache, jsonPathCache, scenarioHandler}
+func NewLoader(config LoaderConfig, regexCache *RegexCache, jsonPathCache *JSONPathCache, scenarioHandler *ScenarioHandler) *Loader {
+	return &Loader{config, regexCache, jsonPathCache, scenarioHandler}
 }
 
 func (loader *Loader) GetMappings() (Mappings, error) {
-	mappingsPath := config.String("loader.path.mapping")
-	responsesPath := config.String("loader.path.response")
-
 	mappings := make(Mappings)
-	err := loader.loadMappings(mappingsPath, responsesPath, mappings)
+	err := loader.loadMappings(loader.config.MappingPath, loader.config.ResponsePath, mappings)
 	if err != nil {
 		return mappings, err
 	}
@@ -47,6 +45,9 @@ func (loader *Loader) loadMappings(mappingsPath string, responsesPath string, ma
 	err := filepath.WalkDir(
 		mappingsPath,
 		func(filePath string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return errors.Wrapf(err, "error walking mapping path %q", filePath)
+			}
 			if d != nil && !d.IsDir() {
 				log.Debugf("reading file '%s'", filePath)
 				loaded, err := loader.decodeMapping(filePath)
@@ -107,9 +108,6 @@ func (*Loader) decodeMapping(path string) ([]Mapping, error) {
 		}
 		mappings = append(mappings, m)
 	}
-	for _, m := range mappings {
-		m.FilePath = path
-	}
 
 	return mappings, nil
 }
@@ -131,17 +129,21 @@ func (loader Loader) processMapping(mapping *Mapping, filePath, responsesPath st
 		if err != nil {
 			return errors.Wrap(err, "error loading response body file for mapping")
 		}
-		mapping.Response.Body = spaceRegex.ReplaceAllString(string(bodyContent), "$1")
+		var compacted bytes.Buffer
+		if err := json.Compact(&compacted, bodyContent); err == nil {
+			bodyContent = compacted.Bytes()
+		}
+		mapping.Response.Body = string(bodyContent)
 	}
 
 	err := loader.regexCache.AddFromMapping(*mapping)
 	if err != nil {
-		return errors.Wrap(err, "error adding mapping from")
+		return errors.Wrap(err, "error compiling regex patterns")
 	}
 
 	err = loader.jsonPathCache.AddExpressions(mapping.Request.Body.JsonPath)
 	if err != nil {
-		return errors.Wrap(err, "error adding mapping from")
+		return errors.Wrap(err, "error parsing jsonpath expressions")
 	}
 
 	mapping.CalcMaxScoreAndCost()

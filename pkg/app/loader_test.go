@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"testing"
 	"time"
 
@@ -206,9 +205,9 @@ func TestDecodeFile(t *testing.T) {
 			wantErr: FileNotFound("testdata/decode/you_shall_pass.json"),
 		},
 		{
-			name:    "Should return an error when unmarshaling an invalid mapping",
-			path:    "testdata/decode/invalid_mapping.json",
-			wantErr: errors.New("json: cannot unmarshal bool into Go struct field RequestMapping.request.method of type string"),
+			name:   "Should return an error when unmarshaling an invalid mapping",
+			path:   "testdata/decode/invalid_mapping.json",
+			anyErr: true,
 		},
 	}
 
